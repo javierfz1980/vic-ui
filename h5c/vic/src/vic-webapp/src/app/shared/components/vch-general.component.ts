@@ -7,7 +7,7 @@ import {ipOrFqdnPattern, numberPattern, supportedCharsPattern} from '../utils/va
 export interface VchGeneralModel {
   name: string;
   containerNameConvention: string;
-  debug: number;
+  debug: string;
   syslogAddress: string;
 }
 
@@ -87,7 +87,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
     this.formValueChangesSubscription = this.form.valueChanges.subscribe(value => {
       if (this.form.valid) {
         this.model.name = value.name.trim();
-        this.model.debug = parseInt(value.debug, 10);
+        this.model.debug = value.debug;
 
         const prefix = value.containerNameConventionPrefix.trim(),
           postfix = value.containerNameConventionPostfix.trim();
@@ -97,14 +97,15 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
             prefix + value.containerNameConvention + postfix;
         }
 
+        /* tslint:disable:no-shadowed-variable */
         const {
-          syslogTransportValue,
-          syslogHostValue,
-          syslogPortValue
+          syslogTransport,
+          syslogHost,
+          syslogPort
         } = value;
 
-        if (syslogHostValue && syslogPortValue) {
-          this.model.syslogAddress = `${syslogTransportValue}://${syslogHostValue}:${syslogPortValue}`;
+        if (syslogHost && syslogPort) {
+          this.model.syslogAddress = `${syslogTransport}://${syslogHost}:${syslogPort}`;
         }
       }
     });
@@ -117,7 +118,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
   toApiPayload(): VchGeneralApiPayload {
     return {
       name: this.model.name,
-      debug: this.model.debug,
+      debug: parseInt(this.model.debug, 10),
       syslog_addr: this.model.syslogAddress,
       container: {
         name_convention: this.model.containerNameConvention
