@@ -28,7 +28,7 @@ export class VchCreationWizardGeneralComponent {
   model: VchGeneralModel = {
     name: 'virtual-container-host',
     containerNameConvention: '',
-    debug: 0,
+    debug: '0',
     syslogAddress: ''
   };
   vicApplianceIp: string;

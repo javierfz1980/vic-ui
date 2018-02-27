@@ -33,7 +33,7 @@ export class ConfigureVchModalComponent implements OnInit, OnDestroy {
     general: {
       name: 'test',
       containerNameConvention: '',
-      debug: 0,
+      debug: '0',
       syslogAddress: ''
     }
   };
