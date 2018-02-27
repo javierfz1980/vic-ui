@@ -20,6 +20,13 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {NgModule} from '@angular/core';
 import {VicOvaVerificationComponent} from './vic-ova-verification.component';
 import {VchGeneralComponent} from './components/vch-general.component';
+import {CliCommandComponent} from './components/cli-command/cli-command.component';
+
+const declarations = [
+  VicOvaVerificationComponent,
+  VchGeneralComponent,
+  CliCommandComponent
+];
 
 @NgModule({
   imports: [
@@ -29,13 +36,11 @@ import {VchGeneralComponent} from './components/vch-general.component';
     ReactiveFormsModule
   ],
   declarations: [
-    VicOvaVerificationComponent,
-    VchGeneralComponent
+    ...declarations
   ],
   providers: [],
   exports: [
-    VicOvaVerificationComponent,
-    VchGeneralComponent
+    ...declarations
   ]
 })
 export class SharedModule {

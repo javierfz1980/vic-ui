@@ -13,7 +13,9 @@
             <clr-tab>
               <button clrTabLink>General</button>
               <clr-tab-content id="general" *clrIfActive>
-                <vic-vch-general [model]="model.general" #general></vic-vch-general>
+                <vic-vch-general #general
+                                 [model]="model.general"
+                                 (modelChanged)="onModelChanged('general', $event)"></vic-vch-general>
               </clr-tab-content>
             </clr-tab>
             <clr-tab>
@@ -57,6 +59,15 @@
       </div>
     </div>
     <div class="modal-footer">
+
+      <!-- CLI Command -->
+      <div class="wizzard-cli-container">
+        <vic-cli-command [payload]="modelPayload.asObservable()"
+                         [commandType]="'configure'"
+                         [showCliCommand]="true">
+        </vic-cli-command>
+      </div>
+
       <div class="clr-wizard-footer-buttons">
         <button class="btn btn-outline" type="button" (click)="onCancel()">Cancel</button>
         <button class="btn btn-default" type="button" (click)="onSave()">Save</button>
