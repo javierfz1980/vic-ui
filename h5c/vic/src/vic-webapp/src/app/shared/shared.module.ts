@@ -14,13 +14,13 @@
  limitations under the License.
 */
 
-import { ClarityModule } from 'clarity-angular';
+import { ClarityModule } from '@clr/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModel } from '@angular/forms/src/directives/ng_model';
 import { NgModule } from '@angular/core';
 import { VicOvaVerificationComponent } from './vic-ova-verification.component';
-import { VchGeneralComponent } from './components/vch-general.component';
+import {VchGeneralComponent} from './components/vch-general.component';
 
 @NgModule({
   imports: [
