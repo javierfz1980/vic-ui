@@ -20,6 +20,7 @@ import { Observable } from 'rxjs/Observable';
 import { camelCasePattern } from '../../shared/utils/validators';
 import { getClientOS } from '../../shared/utils/detection'
 import { isUploadableFileObject } from '../../shared/utils/model-checker';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 
 // TODO: refactor & clean up the template
 @Component({
@@ -29,6 +30,7 @@ import { isUploadableFileObject } from '../../shared/utils/model-checker';
 })
 export class SummaryComponent implements OnInit {
   public form: FormGroup;
+  public cliPayload: BehaviorSubject<any> = new BehaviorSubject<any>(null);
   @Input() payload: any;
   public targetOS: string;
   public copySucceeded: boolean = null;
@@ -52,6 +54,7 @@ export class SummaryComponent implements OnInit {
    * On WizardPage load event, start listening for events on inputs
    */
   onPageLoad(): void {
+    this.cliPayload.next(this.payload);
     // refresh cli value based on any changes made to the previous pages
     this.form.get('cliCommand').setValue(this.stringifyProcessedPayload());
 

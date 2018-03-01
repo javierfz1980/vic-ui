@@ -503,5 +503,11 @@
                   formControlName="cliCommand"></textarea>
       </div>
     </div>
+
+    <!-- CLI Command component -->
+    <vic-cli-command [payload]="cliPayload.asObservable()"
+                     [commandType]="'create'"
+                     [showCliCommand]="true">
+    </vic-cli-command>
   </section>
 </form>
