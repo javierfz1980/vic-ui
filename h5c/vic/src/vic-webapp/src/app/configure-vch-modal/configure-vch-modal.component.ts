@@ -18,7 +18,7 @@ import {Component, ElementRef, OnDestroy, OnInit, Renderer, ViewChild} from '@an
 import {VchGeneralModel} from '../shared/components/vch-general.component';
 import {GlobalsService} from '../shared/globals.service';
 import {CONFIGURE_VCH_MODAL_HEIGHT} from '../shared/constants';
-import {Modal} from 'clarity-angular';
+import {Modal} from '@clr/angular';
 
 @Component({
   selector: 'vic-configure-vch-modal',
