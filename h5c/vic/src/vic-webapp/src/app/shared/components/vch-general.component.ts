@@ -1,4 +1,4 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs/Subscription';
 import {VchForm} from './vch-form';
@@ -26,7 +26,10 @@ export interface VchGeneralApiPayload {
   styleUrls: ['./vch-general.component.scss']
 })
 export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
+
   @Input() model: VchGeneralModel;
+
+  @Output('modelChanged') modelChangedEvent: EventEmitter<VchGeneralModel> = new EventEmitter();
 
   private containerNameConventionPattern = /^(.*)({id}|{name})(.*)$/;
   private syslogAddressPattern = /^(tcp|udp):\/\/(.*):(.*)$/;
@@ -83,6 +86,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
         ]
       ]
     });
+    this.modelChangedEvent.emit(this.model);
 
     this.formValueChangesSubscription = this.form.valueChanges.subscribe(value => {
       if (this.form.valid) {
@@ -107,6 +111,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
         if (syslogHost && syslogPort) {
           this.model.syslogAddress = `${syslogTransport}://${syslogHost}:${syslogPort}`;
         }
+        this.modelChangedEvent.emit(this.model);
       }
     });
   }
