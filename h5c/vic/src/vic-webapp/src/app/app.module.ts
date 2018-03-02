@@ -35,6 +35,7 @@ import { AppErrorHandler } from './shared/appErrorHandler';
 import { AppRoutingModule, routedComponents } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { DisableCookieXSRFStrategy } from './shared/utils/disable-cookie-xsrf-strategy';
+import {HttpClientModule} from '@angular/common/http';
 
 @NgModule({
   imports: [
@@ -42,6 +43,7 @@ import { DisableCookieXSRFStrategy } from './shared/utils/disable-cookie-xsrf-st
     BrowserAnimationsModule,
     AppRoutingModule,
     HttpModule,
+    HttpClientModule,
     ClarityModule.forRoot()
   ],
   declarations: [

@@ -18,6 +18,8 @@ import {CommonModule} from '@angular/common';
 import {RouterModule, Routes} from '@angular/router';
 import {ClarityModule} from '@clr/angular';
 import {ConfigureVchViewComponent} from './configure-vch-view.component';
+import {ConfigureVchService} from '../services/configure-vch.service';
+import {VicGeneralService} from '../services/vic-general.service';
 
 const routes: Routes = [
   {path: '', component: ConfigureVchViewComponent},
@@ -32,6 +34,10 @@ const routes: Routes = [
   ],
   declarations: [
     ConfigureVchViewComponent
+  ],
+  providers: [
+    ConfigureVchService,
+    VicGeneralService
   ],
   exports: [ConfigureVchViewComponent]
 })
