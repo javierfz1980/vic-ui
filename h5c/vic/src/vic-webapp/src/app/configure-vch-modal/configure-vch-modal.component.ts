@@ -18,7 +18,11 @@ import {Component, ElementRef, OnDestroy, OnInit, Renderer, ViewChild} from '@an
 import {VchGeneralModel} from '../shared/components/vch-general.component';
 import {GlobalsService} from '../shared/globals.service';
 import {CONFIGURE_VCH_MODAL_HEIGHT} from '../shared/constants';
-import {Modal} from 'clarity-angular';
+import {Modal} from '@clr/angular';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+
+type ModelKeys = 'general';
+type ModelTypes = VchGeneralModel;
 
 @Component({
   selector: 'vic-configure-vch-modal',
@@ -40,6 +44,8 @@ export class ConfigureVchModalComponent implements OnInit, OnDestroy {
   loading = true;
 
   @ViewChild('modal') modal: Modal;
+
+  public modelPayload: BehaviorSubject<ModelTypes> = new BehaviorSubject(null);
 
   constructor(private globalsService: GlobalsService,
               private renderer: Renderer,
@@ -103,5 +109,10 @@ export class ConfigureVchModalComponent implements OnInit, OnDestroy {
   onSave() {
     const webPlatform = this.globalsService.getWebPlatform();
     webPlatform.closeDialog();
+  }
+
+  onModelChanged(key: ModelKeys, model: ModelTypes) {
+    this.model[key] = model;
+    this.modelPayload.next(this.model[key]);
   }
 }
