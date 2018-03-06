@@ -15,14 +15,16 @@
 */
 
 import {Component, ElementRef, OnDestroy, OnInit, Renderer, ViewChild} from '@angular/core';
-import {VchGeneralModel} from '../shared/components/vch-general.component';
-import {GlobalsService} from '../shared/globals.service';
-import {CONFIGURE_VCH_MODAL_HEIGHT} from '../shared/constants';
+import {GlobalsService} from '../../shared/globals.service';
+import {CONFIGURE_VCH_MODAL_HEIGHT} from '../../shared/constants/index';
 import {Modal} from '@clr/angular';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+import {ActivatedRoute} from '@angular/router';
+import {VchApi, VchUi, VchUiGeneral} from '../../interfaces/vch';
+import {Observable} from 'rxjs/Observable';
+import {ConfigureVchService} from '../configure-vch.service';
 
-type ModelKeys = 'general';
-type ModelTypes = VchGeneralModel;
+type ModelTypes = VchUiGeneral;
 
 @Component({
   selector: 'vic-configure-vch-modal',
@@ -31,29 +33,39 @@ type ModelTypes = VchGeneralModel;
 })
 
 export class ConfigureVchModalComponent implements OnInit, OnDestroy {
-  model: {
-    general: VchGeneralModel
-  } = {
-    general: {
-      name: 'test',
-      containerNameConvention: '',
-      debug: '0',
-      syslogAddress: ''
-    }
-  };
-  loading = true;
 
   @ViewChild('modal') modal: Modal;
 
+  public vchId: string;
+  public vchInfo: Observable<VchUi>;
   public modelPayload: BehaviorSubject<ModelTypes> = new BehaviorSubject(null);
+  public showCli = false;
 
   constructor(private globalsService: GlobalsService,
+              private activatedRoute: ActivatedRoute,
+              private configureVchService: ConfigureVchService,
               private renderer: Renderer,
               private el: ElementRef) { }
 
   ngOnInit() {
+    this.vchId = this.activatedRoute.snapshot.url[0].path;
+    this.vchInfo = this.configureVchService.getVchInfo(this.vchId)
+      .map((vch: VchApi) => {
+        console.log('configure modal VchApi: ', vch);
+        const uiModel: VchUi = {
+          general: {
+            name: vch.name || '',
+            containerNameConvention: vch.container.name_convention || '',
+            debug: vch.debug || 0,
+            syslogAddress: vch.syslog_addr || ''
+          }
+        };
+        console.log('configure modal VchUi: ', uiModel);
+        this.showCli = true;
+        return uiModel;
+      });
+
     this.resizeToParentFrame();
-    this.loading = false;
     this.modal.open();
   }
 
@@ -111,8 +123,7 @@ export class ConfigureVchModalComponent implements OnInit, OnDestroy {
     webPlatform.closeDialog();
   }
 
-  onModelChanged(key: ModelKeys, model: ModelTypes) {
-    this.model[key] = model;
-    this.modelPayload.next(this.model[key]);
+  modelChanged(model: ModelTypes) {
+    this.modelPayload.next(model);
   }
 }

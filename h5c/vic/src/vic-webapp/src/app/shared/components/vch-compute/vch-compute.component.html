@@ -1,0 +1,60 @@
+<!-- Read Only content -->
+<div *ngIf="readOnly; else formContent" class="configure-tabs-space">
+  <clr-stack-view class="mt-2">
+    <clr-stack-header>Resource</clr-stack-header>
+    <clr-stack-block>
+      <clr-stack-label>Cluster/Resource pool</clr-stack-label>
+      <clr-stack-content>{{model.computeResource}}</clr-stack-content>
+    </clr-stack-block>
+  </clr-stack-view>
+
+  <clr-stack-view>
+    <clr-stack-header>Virtual Container Host limits</clr-stack-header>
+    <clr-stack-block>
+      <clr-stack-label>CPU</clr-stack-label>
+      <clr-stack-content>{{model.cpuLimit || 'Unlimited'}}</clr-stack-content>
+    </clr-stack-block>
+    <clr-stack-block>
+      <clr-stack-label>Memory</clr-stack-label>
+      <clr-stack-content>{{model.memoryLimit || 'Unlimited'}}</clr-stack-content>
+    </clr-stack-block>
+  </clr-stack-view>
+
+  <clr-stack-view>
+    <clr-stack-header>Virtual Container Host settings</clr-stack-header>
+    <clr-stack-block>
+      <clr-stack-label>CPU reservations</clr-stack-label>
+      <clr-stack-content>{{model.cpuReservation}} MHz</clr-stack-content>
+    </clr-stack-block>
+    <clr-stack-block>
+      <clr-stack-label>CPU shares</clr-stack-label>
+      <clr-stack-content>{{model.cpuShares | capitalize}}</clr-stack-content>
+    </clr-stack-block>
+    <clr-stack-block>
+      <clr-stack-label>Memory Reservation</clr-stack-label>
+      <clr-stack-content>{{model.memoryReservation}} MB</clr-stack-content>
+    </clr-stack-block>
+    <clr-stack-block>
+      <clr-stack-label>Memory shares</clr-stack-label>
+      <clr-stack-content>{{model.memoryShares | capitalize}}</clr-stack-content>
+    </clr-stack-block>
+  </clr-stack-view>
+
+  <clr-stack-view>
+    <clr-stack-header>VM endpoint settings</clr-stack-header>
+    <clr-stack-block>
+      <clr-stack-label>CPUs</clr-stack-label>
+      <clr-stack-content>{{model.endpointCpu}}</clr-stack-content>
+    </clr-stack-block>
+    <clr-stack-block>
+      <clr-stack-label>Memory</clr-stack-label>
+      <clr-stack-content>{{model.endpointMemory}} MB</clr-stack-content>
+    </clr-stack-block>
+  </clr-stack-view>
+</div>
+
+
+<!-- Form content -->
+<ng-template #formContent>
+  Compute Form
+</ng-template>

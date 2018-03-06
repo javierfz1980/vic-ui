@@ -20,37 +20,27 @@ import 'rxjs/add/operator/mergeAll';
 import 'rxjs/add/operator/mergeMap';
 
 import {
-  CHECK_RP_UNIQUENESS_URL,
-  CPU_MIN_LIMIT_MHZ,
-  GET_CLONE_TICKET_URL,
-  MEMORY_MIN_LIMIT_MB,
-  VIC_APPLIANCES_LOOKUP_URL,
   VIC_APPLIANCE_PORT
 } from '../shared/constants/index';
-import {Headers, Http, RequestOptions, URLSearchParams} from '@angular/http';
-
-import { ComputeResource } from '../interfaces/compute.resource';
 import { GlobalsService } from '../shared/index';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { byteToLegibleUnit } from '../shared/utils/filesize';
-import { flattenArray } from '../shared/utils/array-utils';
 import {
-  getServerInfoByVchObjRef,
-  getServerServiceGuidFromObj
+  getServerInfoByVchObjRef
 } from '../shared/utils/object-reference';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {VicGeneralService} from './vic-general.service';
 import {VirtualContainerHost} from '../vch-view/vch.model';
+import {CreateVchWizardService} from '../create-vch-wizard/create-vch-wizard.service';
+import {VchApi} from '../interfaces/vch';
 
 @Injectable()
 export class ConfigureVchService {
 
   constructor(private httpClient: HttpClient,
-              private vicGeneralService: VicGeneralService,
+              private createVchWizardService: CreateVchWizardService,
               private globalsService: GlobalsService) {}
 
-  getVchInfo(vchIdStr: string): Observable<VirtualContainerHost> {
+  getVchInfo(vchIdStr: string): Observable<VchApi> {
 
     // --- HARCODED DATA --------------------------------------------------------------
     // const vch = 'urn:vmomi:VirtualMachine:vm-171:816c4bdf-dbeb-4087-ba84-6cee1da73098'};
@@ -58,12 +48,10 @@ export class ConfigureVchService {
     // const targetThumbprint = '2D:03:4E:02:D6:1D:CE:7C:6D:68:E3:87:64:11:45:28:B9:56:0B:C4';
     // --------------------------------------------------------------------------------
 
-    // this.vchId = this.activatedRoute.snapshot.url[0].path;
     const vch = <VirtualContainerHost>{id: vchIdStr};
-    console.log(vchIdStr)
     return Observable.combineLatest(
-        this.vicGeneralService.getVicApplianceIp(),
-        this.vicGeneralService.acquireCloneTicket(vch.id.split(':')[4]))
+        this.createVchWizardService.getVicApplianceIp(),
+        this.createVchWizardService.acquireCloneTicket(vch.id.split(':')[4]))
       .switchMap(([serviceHost, cloneTicket]) => {
         const vchId = vch.id.split(':')[3];
         const servicePort = VIC_APPLIANCE_PORT;
@@ -80,12 +68,7 @@ export class ConfigureVchService {
           'X-VMWARE-TICKET': cloneTicket
         });
 
-        // const options  = new RequestOptions({ headers: headers });
-        return this.httpClient.get<VirtualContainerHost>(url, { headers: headers })
-        /*.map(response => response.json())
-        .subscribe(response => {
-          console.log('vch info: ', response);
-        });*/
+        return this.httpClient.get<VchApi>(url, { headers: headers })
       });
   }
 }

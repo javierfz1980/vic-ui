@@ -17,7 +17,8 @@ import {Component, ViewChild} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/observable/timer';
 import {CreateVchWizardService} from '../create-vch-wizard.service';
-import {VchGeneralModel, VchGeneralComponent} from '../../shared/components/vch-general.component';
+import {VchGeneralComponent} from '../../shared/components/vch-general/vch-general.component';
+import {VchUiGeneral} from '../../interfaces/vch';
 
 @Component({
   selector: 'vic-vch-creation-general',
@@ -25,10 +26,10 @@ import {VchGeneralModel, VchGeneralComponent} from '../../shared/components/vch-
   styleUrls: ['./general.scss']
 })
 export class VchCreationWizardGeneralComponent {
-  model: VchGeneralModel = {
+  model: VchUiGeneral = {
     name: 'virtual-container-host',
     containerNameConvention: '',
-    debug: '0',
+    debug: 0,
     syslogAddress: ''
   };
   vicApplianceIp: string;

@@ -17,16 +17,19 @@
 import { ClarityModule } from '@clr/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgModel } from '@angular/forms/src/directives/ng_model';
 import { NgModule } from '@angular/core';
 import { VicOvaVerificationComponent } from './vic-ova-verification.component';
-import {VchGeneralComponent} from './components/vch-general.component';
+import {VchGeneralComponent} from './components/vch-general/vch-general.component';
 import {CliCommandComponent} from './components/cli-command/cli-command.component';
+import {VchComputeComponent} from './components/vch-compute/vch-compute.component';
+import {CapitalizePipe} from './pipes/capitalize.pipe';
 
 const declarations = [
   VicOvaVerificationComponent,
   VchGeneralComponent,
-  CliCommandComponent
+  VchComputeComponent,
+  CliCommandComponent,
+  CapitalizePipe
 ];
 
 @NgModule({

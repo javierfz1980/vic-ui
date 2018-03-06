@@ -16,7 +16,7 @@ export abstract class VchForm {
    * an empty array, and then return the array joined
    * @returns {string} vic-machine compatible arguments
    */
-  toCliArguments(): string {
+  /*toCliArguments(): string {
     const results = [];
 
     for (const field in this.model) {
@@ -80,10 +80,10 @@ export abstract class VchForm {
 
     return results.join(' ')
   }
-
+*/
   abstract toApiPayload(): any;
 
-  private escapeSpecialCharsForCLI(text) {
+  /*private escapeSpecialCharsForCLI(text) {
     return text.replace(/([() ])/g, '\\$&');
-  }
+  }*/
 }

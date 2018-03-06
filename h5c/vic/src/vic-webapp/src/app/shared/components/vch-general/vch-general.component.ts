@@ -1,24 +1,9 @@
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs/Subscription';
-import {VchForm} from './vch-form';
-import {ipOrFqdnPattern, numberPattern, supportedCharsPattern} from '../utils/validators';
-
-export interface VchGeneralModel {
-  name: string;
-  containerNameConvention: string;
-  debug: string;
-  syslogAddress: string;
-}
-
-export interface VchGeneralApiPayload {
-  name: string;
-  debug: number;
-  syslog_addr: string;
-  container?: {
-    name_convention: string
-  };
-}
+import {ipOrFqdnPattern, numberPattern, supportedCharsPattern} from '../../utils/validators';
+import {VchApiGeneral, VchUiGeneral} from '../../../interfaces/vch';
+import {VchForm} from '../vch-form';
 
 @Component({
   selector: 'vic-vch-general',
@@ -27,9 +12,11 @@ export interface VchGeneralApiPayload {
 })
 export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
 
-  @Input() model: VchGeneralModel;
+  @Input() model: VchUiGeneral;
 
-  @Output('modelChanged') modelChangedEvent: EventEmitter<VchGeneralModel> = new EventEmitter();
+  @Input() readOnly: boolean;
+
+  @Output() modelChanged: EventEmitter<VchUiGeneral> = new EventEmitter();
 
   private containerNameConventionPattern = /^(.*)({id}|{name})(.*)$/;
   private syslogAddressPattern = /^(tcp|udp):\/\/(.*):(.*)$/;
@@ -86,7 +73,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
         ]
       ]
     });
-    this.modelChangedEvent.emit(this.model);
+    this.modelChanged.emit(this.model);
 
     this.formValueChangesSubscription = this.form.valueChanges.subscribe(value => {
       if (this.form.valid) {
@@ -101,7 +88,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
             prefix + value.containerNameConvention + postfix;
         }
 
-        /* tslint:disable:no-shadowed-variable */
+        /!* tslint:disable:no-shadowed-variable *!/
         const {
           syslogTransport,
           syslogHost,
@@ -111,7 +98,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
         if (syslogHost && syslogPort) {
           this.model.syslogAddress = `${syslogTransport}://${syslogHost}:${syslogPort}`;
         }
-        this.modelChangedEvent.emit(this.model);
+        this.modelChanged.emit(this.model);
       }
     });
   }
@@ -120,10 +107,10 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
     this.formValueChangesSubscription.unsubscribe();
   }
 
-  toApiPayload(): VchGeneralApiPayload {
+  toApiPayload(): VchApiGeneral {
     return {
       name: this.model.name,
-      debug: parseInt(this.model.debug, 10),
+      debug: this.model.debug, //arseInt(this.model.debug, 10),
       syslog_addr: this.model.syslogAddress,
       container: {
         name_convention: this.model.containerNameConvention
