@@ -81,7 +81,7 @@ export class CliCommandComponent implements OnInit {
    * @returns {string} vic-machine compatible arguments
    */
   toCliArguments(targetOS: string, payloadModel: any): string {
-    console.log('toCliArguments payload: ', payloadModel);
+    console.log('toCliArguments payload enter: ', payloadModel);
     if (!targetOS || !payloadModel || !this.commandType) {
       return null;
     }
@@ -101,31 +101,33 @@ export class CliCommandComponent implements OnInit {
       if (!payload[section]) {
         continue;
       }
-
       // if there is only one entry in the section and it's of string type
       // add it to results array here
-      if (typeof payload[section] === 'string') {
-        if (!payload[section].trim()) {
-          continue;
+      let val = payload[section];
+      if (typeof val === 'string' || typeof val === 'boolean' || typeof val === 'number') {
+        if (typeof val === 'string') {
+          val = this.escapeSpecialCharsForCLI(val);
+          if (!val.trim()) {
+            continue;
+          }
         }
-        results.push(`--${section} ${payload[section]}`);
+        results.push(`--${section} ${this.valueToString(val)}`);
         continue;
       }
-
       for (const key in payload[section]) {
         if (!(payload[section][key]) || payload[section][key] === '0') {
           continue;
         }
         const newKey = key.replace(camelCasePattern, '$1-$2').toLowerCase();
         let value = payload[section][key];
-        if (typeof value === 'string') {
-          value = this.escapeSpecialCharsForCLI(value);
-          if (!value.trim()) {
-            continue;
+        if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
+          if (typeof value === 'string') {
+            value = this.escapeSpecialCharsForCLI(value);
+            if (!value.trim()) {
+              continue;
+            }
           }
-          results.push(`--${newKey} ${value}`);
-        } else if (typeof value === 'boolean') {
-          results.push(`--${newKey}`);
+          results.push(`--${newKey} ${this.valueToString(value)}`);
         } else {
           // repeat adding multiple, optional fields with the same key
           for (const i in value) {
@@ -155,8 +157,18 @@ export class CliCommandComponent implements OnInit {
         }
       }
     }
-
+    console.log('toCliArguments payload result: ', results.join(' '));
     return results.join(' ');
+  }
+
+  private valueToString(value: any): string {
+    if (typeof value === 'string') {
+      return value;
+    } else if (typeof value === 'boolean') {
+          return '';
+    } else if (typeof value === 'number') {
+      return value.toString();
+    }
   }
 
   private escapeSpecialCharsForCLI(text) {

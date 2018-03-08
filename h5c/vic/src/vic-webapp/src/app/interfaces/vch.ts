@@ -75,8 +75,8 @@ export interface VchApiCompute {
 }
 
 export interface VchUiCompute {
-  cpuLimit?: number;
-  memoryLimit?: number;
+  cpuLimit?: number | string;
+  memoryLimit?: number | string;
   cpuReservation?: number;
   cpuShares: SharesLevel;
   memoryShares: SharesLevel;
@@ -238,12 +238,10 @@ export interface VchApiContainer {
 }
 
 
-
-
-
 export interface VchUi {
   general?: VchUiGeneral;
   compute?: VchUiCompute;
 }
 
 export type VchUiModelTypes = VchUiGeneral | VchUiCompute;
+export type VchUiModelKeys = 'general' | 'compute';

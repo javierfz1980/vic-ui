@@ -25,6 +25,7 @@ import {ConfigureVchService} from '../configure-vch.service';
 import {ActivatedRoute} from '@angular/router';
 import {Observable} from 'rxjs/Observable';
 import {SharesLevel, VchApi, VchUi} from '../../interfaces/vch';
+import {ConfigureBase} from '../configure-base';
 
 @Component({
   selector: 'vic-configure-vch-view',
@@ -32,42 +33,21 @@ import {SharesLevel, VchApi, VchUi} from '../../interfaces/vch';
   templateUrl: './configure-vch-view.component.html'
 })
 
-export class ConfigureVchViewComponent implements OnInit, OnDestroy {
+export class ConfigureVchViewComponent extends ConfigureBase implements OnInit, OnDestroy {
 
   public vchId: string;
   public vchInfo: Observable<VchUi>;
 
   constructor(private globalsService: GlobalsService,
               private configureVchService: ConfigureVchService,
-              private activatedRoute: ActivatedRoute) { }
+              private activatedRoute: ActivatedRoute) {
+    super();
+  }
 
   ngOnInit() {
     this.vchId = this.activatedRoute.snapshot.url[0].path;
     this.vchInfo = this.configureVchService.getVchInfo(this.vchId)
-      .map((vch: VchApi) => {
-        console.log('configure view VchApi: ', vch);
-        const uiModel: VchUi = {
-          general: {
-            name: vch.name,
-            containerNameConvention: vch.container.name_convention || '',
-            debug: vch.debug,
-            syslogAddress: vch.syslog_addr || ''
-          },
-          compute: {
-            cpuLimit: vch.compute.cpu.limit ? vch.compute.cpu.limit.value : null,
-            memoryLimit: vch.compute.memory.limit ? vch.compute.memory.limit.value : null,
-            cpuReservation: vch.compute.cpu.reservation ? vch.compute.cpu.reservation.value : null,
-            cpuShares: vch.compute.cpu.shares.level,
-            memoryShares: vch.compute.memory.shares.level,
-            memoryReservation: vch.compute.memory.reservation ? vch.compute.memory.reservation.value : null,
-            endpointCpu: vch.endpoint.cpu.sockets,
-            endpointMemory: vch.endpoint.memory.value,
-            computeResource: vch.compute.resource.id
-          }
-        };
-        console.log('configure view VchUi: ', uiModel);
-        return uiModel;
-      });
+      .map(this.mapApiDatatoUiData);
   }
 
 

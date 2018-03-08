@@ -18,8 +18,6 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { ClarityModule } from '@clr/angular';
 import { CommonModule } from '@angular/common';
-import { ComputeCapacityComponent } from './compute-capacity/compute-capacity.component';
-import { ComputeResourceTreenodeComponent } from './compute-capacity/compute-resource-treenode.component';
 import { CreateVchWizardComponent } from './create-vch-wizard.component';
 import { CreateVchWizardService } from './create-vch-wizard.service';
 import { NetworksComponent } from './networks/networks.component';
@@ -28,13 +26,21 @@ import { OperationsUserComponent } from './operations-user/operations-user.compo
 import { SecurityComponent } from './security/security.component';
 import { StorageCapacityComponent } from './storage-capacity/storage-capacity.component';
 import { SummaryComponent } from './summary/summary.component';
-import { VchCreationWizardGeneralComponent } from './general/general.component';
 import { RegistryAccessComponent } from './registry-access/registry-access.component';
 import { SharedModule } from '../shared/shared.module';
 
 const routes: Routes = [
   { path: '', component: CreateVchWizardComponent },
   { path: ':id', component: CreateVchWizardComponent }
+];
+
+const declarations = [
+  CreateVchWizardComponent,
+  StorageCapacityComponent,
+  SecurityComponent,
+  RegistryAccessComponent,
+  OperationsUserComponent,
+  SummaryComponent
 ];
 
 @NgModule({
@@ -47,30 +53,14 @@ const routes: Routes = [
     SharedModule
   ],
   declarations: [
-    CreateVchWizardComponent,
-    VchCreationWizardGeneralComponent,
-    ComputeCapacityComponent,
-    ComputeResourceTreenodeComponent,
-    StorageCapacityComponent,
-    NetworksComponent,
-    SecurityComponent,
-    RegistryAccessComponent,
-    OperationsUserComponent,
-    SummaryComponent
+    ...declarations,
+    NetworksComponent
   ],
   providers: [
     CreateVchWizardService
   ],
   exports: [
-    CreateVchWizardComponent,
-    VchCreationWizardGeneralComponent,
-    ComputeCapacityComponent,
-    ComputeResourceTreenodeComponent,
-    StorageCapacityComponent,
-    SecurityComponent,
-    RegistryAccessComponent,
-    OperationsUserComponent,
-    SummaryComponent
+    ...declarations
   ]
 })
 export class CreateVchWizardModule { }
