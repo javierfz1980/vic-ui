@@ -52,7 +52,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
       syslogTransport = 'tcp',
       syslogHost = '',
       syslogPort = '',
-    ] = (this.model && this.model.containerNameConvention.match(this.syslogAddressPattern)) || [];
+    ] = (this.model && this.model.syslogAddress.match(this.syslogAddressPattern)) || [];
 
     this.form = this.formBuilder.group({
       name: [this.model.name, [ Validators.required,

@@ -23,6 +23,9 @@ export class CliCommandComponent implements OnInit {
   @Input()
   commandType: CommandType;
 
+  @Input()
+  disabled = false;
+
   public form: FormGroup;
   public copySucceeded: boolean = null;
   public cliCommand: Observable<string>;
@@ -81,7 +84,6 @@ export class CliCommandComponent implements OnInit {
    * @returns {string} vic-machine compatible arguments
    */
   toCliArguments(targetOS: string, payloadModel: any): string {
-    console.log('toCliArguments payload enter: ', payloadModel);
     if (!targetOS || !payloadModel || !this.commandType) {
       return null;
     }
@@ -157,7 +159,6 @@ export class CliCommandComponent implements OnInit {
         }
       }
     }
-    console.log('toCliArguments payload result: ', results.join(' '));
     return results.join(' ');
   }
 

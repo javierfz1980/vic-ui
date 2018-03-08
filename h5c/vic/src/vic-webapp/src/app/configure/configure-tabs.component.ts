@@ -3,7 +3,7 @@ import {VchUi, VchUiModelTypes} from '../interfaces/vch';
 import {VchGeneralComponent} from '../shared/components/vch-general/vch-general.component';
 import {VchComputeComponent} from '../shared/components/vch-compute/vch-compute.component';
 
-export type Tabs = VchGeneralComponent | VchComputeComponent;
+export type VchConfigureTabs = VchGeneralComponent | VchComputeComponent;
 
 @Component({
   selector: 'vic-configure-tabs',
@@ -16,15 +16,13 @@ export class ConfigureTabsComponent {
   @Input() readOnly = false;
 
   @Output() modelChanged: EventEmitter<VchUiModelTypes> = new EventEmitter<VchUiModelTypes>();
-  // @Output() focus: EventEmitter<VchUiModelKeys> = new EventEmitter();
-
-  public currentTab: Tabs;
+  @Output() tabFocus: EventEmitter<VchConfigureTabs> = new EventEmitter();
 
   modelChange(model: VchUiModelTypes) {
     this.modelChanged.emit(model);
   }
 
-  focusTab(tab: Tabs) {
-    this.currentTab = tab;
+  focusTab(tab: VchConfigureTabs) {
+    this.tabFocus.emit(tab);
   }
 }

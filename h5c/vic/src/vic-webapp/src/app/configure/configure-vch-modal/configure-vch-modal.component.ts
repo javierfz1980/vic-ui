@@ -27,7 +27,7 @@ import {
 import {Observable} from 'rxjs/Observable';
 import {ConfigureVchService} from '../configure-vch.service';
 import {ConfigureBase} from '../configure-base';
-import {ConfigureTabsComponent} from '../configure-tabs.component';
+import {ConfigureTabsComponent, VchConfigureTabs} from '../configure-tabs.component';
 
 
 @Component({
@@ -45,6 +45,8 @@ export class ConfigureVchModalComponent extends ConfigureBase implements OnInit,
   public vchInfo: Observable<VchUi>;
   public modelPayload: BehaviorSubject<VchUiModelTypes> = new BehaviorSubject(null);
   public showCli = false;
+  public currentFormIsInvalid = false;
+  private currentTab: VchConfigureTabs;
 
   constructor(private globalsService: GlobalsService,
               private activatedRoute: ActivatedRoute,
@@ -122,9 +124,12 @@ export class ConfigureVchModalComponent extends ConfigureBase implements OnInit,
     this.modelPayload.next(model);
   }
 
-  currentFormIsInvalid(): boolean {
-    console.log('current tab 1: ', (!this.tabsComponent || !this.tabsComponent.currentTab.form || !this.tabsComponent.currentTab.form.valid));
-    return !this.tabsComponent || !this.tabsComponent.currentTab.form || !this.tabsComponent.currentTab.form.valid;
+  onTabFocus(currentTab: VchConfigureTabs) {
+    this.currentTab = currentTab;
+  }
+
+  isCurrentTabInvalid(): boolean {
+    return !this.currentTab || !this.currentTab.form || !this.currentTab.form.valid;
   }
 
 }

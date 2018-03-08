@@ -15,9 +15,12 @@
       </div>
     </div>
     <div class="col-xs-5">
-      <clr-icon class="cursor-pointer"
-                shape="copy"
-                (click)="copyCliCommand()"></clr-icon>
+      <button class="btn btn-link btn-copy" [disabled]="disabled" (click)="copyCliCommand()">
+        <clr-icon shape="copy"></clr-icon>
+      </button>
+      <!--<button class="btn btn-link" [disabled]="disabled" (click)="copyCliCommand()">
+        <clr-icon class="cursor-pointer" shape="copy"></clr-icon>
+      </button>-->
     </div>
   </div>
   <!-- Copy Success Indicator-->

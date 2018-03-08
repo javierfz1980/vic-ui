@@ -73,6 +73,11 @@ export class VchComputeComponent implements OnInit, OnDestroy {
   // TODO: add units selectors to compute fields
 
   ngOnInit() {
+
+    if (this.model && this.model.cpuReservation) {
+      this.inAdvancedMode = true;
+    }
+
     if (!this.model) {
       this.model = this.initialModel;
     }
@@ -81,6 +86,8 @@ export class VchComputeComponent implements OnInit, OnDestroy {
       .getWebPlatform()
       .getUserSession()
       .serversInfo;
+
+    console.log('serversInfo: ', this.serversInfo);
 
     const obsArr = this.serversInfo
       .map(serverInfo => this.createWzService
@@ -131,6 +138,7 @@ export class VchComputeComponent implements OnInit, OnDestroy {
     this.createWzService
       .getHostsAndResourcePools(clusterValue)
       .subscribe(resources => {
+        console.log('resources: ', resources);
         this.resources = resources;
         this.isTreeLoading = false;
       });
