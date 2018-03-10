@@ -73,6 +73,7 @@ export class CreateVchWizardService {
     checkVchNameUniqueness(name: string): Observable<boolean> {
         const params = new URLSearchParams();
         params.set('name', name);
+        console.log('name: ', name);
         return this.http.post(CHECK_RP_UNIQUENESS_URL, params)
             .catch(e => Observable.throw(e))
             .map(response => response.json())

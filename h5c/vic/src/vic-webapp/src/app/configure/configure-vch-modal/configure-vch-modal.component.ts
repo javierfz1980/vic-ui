@@ -43,8 +43,11 @@ export class ConfigureVchModalComponent extends ConfigureBase implements OnInit,
 
   public vchId: string;
   public vchInfo: Observable<VchUi>;
-  public modelPayload: BehaviorSubject<VchUiModelTypes> = new BehaviorSubject(null);
+  public currentTabModelPayload: BehaviorSubject<VchUiModelTypes> = new BehaviorSubject(null);
   public showCli = false;
+  public errorMsgs: string[];
+  public loading = false;
+  public errorFlag = false;
   public currentFormIsInvalid = false;
   private currentTab: VchConfigureTabs;
 
@@ -116,12 +119,29 @@ export class ConfigureVchModalComponent extends ConfigureBase implements OnInit,
    * TODO: Implement API PATCH request
    */
   onSave() {
+    if (this.currentTab) {
+      this.loading = true;
+      this.currentTab.onCommit()
+        .subscribe(
+          data => {
+            console.log('valid: ', data);
+            this.errorFlag = false;
+            this.loading = false;
+          },
+          errors => {
+            console.log('invalid: ', errors);
+            this.loading = false;
+            this.errorFlag = true;
+            this.errorMsgs = errors;
+          }
+        )
+    }
     const webPlatform = this.globalsService.getWebPlatform();
-    webPlatform.closeDialog();
+    // webPlatform.closeDialog();
   }
 
-  modelChanged(model: VchUiModelTypes) {
-    this.modelPayload.next(model);
+  currentTabModelChanged(model: VchUiModelTypes) {
+    this.currentTabModelPayload.next(model);
   }
 
   onTabFocus(currentTab: VchConfigureTabs) {

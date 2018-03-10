@@ -44,7 +44,7 @@
     </ng-container>
   </clr-stack-view>
 
-  <clr-stack-view *ngIf="model.endpointCpu || model.endpointMemory">
+  <clr-stack-view *ngIf="model.cpuReservation || model.memoryReservation">
     <clr-stack-header>VM endpoint settings</clr-stack-header>
     <clr-stack-block *ngIf="model.endpointCpu">
       <clr-stack-label>CPUs</clr-stack-label>
@@ -77,35 +77,42 @@
           </label>
 
         </div>
-        <div class="col-xs-6" id="compute-resource-selector">
-          <ng-container>
-            <clr-tree-node class="form-control rootNode" *ngFor="let serverInfo of serversInfo">
-              <button #btnEl class="clr-treenode-link cc-resource">
-                <clr-icon shape="block"></clr-icon>
-                {{ serverInfo['name'] }}
-              </button>
-              <ng-template [clrIfExpanded]="true">
-                <clr-tree-node class="form-control"
-                               [class.invalid]="form.invalid && form.getError('invalidComputeResource')"
-                               [clrLoading]="isTreeLoading"
-                               *ngFor="let dc of datacenter">
-                  <button class="clr-treenode-link"
-                          *ngIf="dc.objRef.indexOf(serverInfo.serviceGuid) > -1">
-                    <clr-icon shape="building"></clr-icon>
-                    {{ dc.text }}
-                  </button>
-                  <ng-template [clrIfExpanded]="true">
-                    <vic-compute-resource-treenode #crTreenode
-                                                   [serverInfo]="serverInfo"
-                                                   [datacenter]="dc"
-                                                   (resourceSelected)="selectComputeResource($event)">
-                    </vic-compute-resource-treenode>
-                  </ng-template>
-                </clr-tree-node>
-              </ng-template>
-            </clr-tree-node>
-          </ng-container>
-        </div>
+        <ng-container *ngIf="model.computeResource; else resourceTree">
+          <div class="col-xs-6">
+            <label>{{model.computeResource}}</label>
+          </div>
+        </ng-container>
+        <ng-template #resourceTree>
+          <div class="col-xs-6" id="compute-resource-selector">
+            <ng-container>
+              <clr-tree-node class="form-control rootNode" *ngFor="let serverInfo of serversInfo">
+                <button #btnEl class="clr-treenode-link cc-resource">
+                  <clr-icon shape="block"></clr-icon>
+                  {{ serverInfo['name'] }}
+                </button>
+                <ng-template [clrIfExpanded]="true">
+                  <clr-tree-node class="form-control"
+                                 [class.invalid]="form.invalid && form.getError('invalidComputeResource')"
+                                 [clrLoading]="isTreeLoading"
+                                 *ngFor="let dc of datacenter">
+                    <button class="clr-treenode-link"
+                            *ngIf="dc.objRef.indexOf(serverInfo.serviceGuid) > -1">
+                      <clr-icon shape="building"></clr-icon>
+                      {{ dc.text }}
+                    </button>
+                    <ng-template [clrIfExpanded]="true">
+                      <vic-compute-resource-treenode #crTreenode
+                                                     [serverInfo]="serverInfo"
+                                                     [datacenter]="dc"
+                                                     (resourceSelected)="selectComputeResource($event)">
+                      </vic-compute-resource-treenode>
+                    </ng-template>
+                  </clr-tree-node>
+                </ng-template>
+              </clr-tree-node>
+            </ng-container>
+          </div>
+        </ng-template>
       </div>
 
       <label>

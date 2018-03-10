@@ -9,13 +9,27 @@
 
     <div class="modal-body">
       <div class="clr-wizard-content">
+
+        <div class="spinner" *ngIf="loading"></div>
+
+        <clr-alert *ngIf="errorFlag"
+                   [clrAlertType]="'alert-danger'"
+                   [clrAlertClosable]="false">
+          <!-- errors -->
+          <div class="alert-item">
+            <div class="alert-text" *ngFor="let errMsg of errorMsgs">
+              {{errMsg}}
+            </div>
+          </div>
+        </clr-alert>
+
         <div class="clr-wizard-page pt-0">
           <vic-configure-tabs #tabsComponent
                               *ngIf="vchInfo | async as vch; else loadingVchInfo"
                               [readOnly]="false"
                               [model]="vch"
-                              (modelChanged)="modelChanged($event)"
-                              (tabFocus)="onTabFocus($event)">
+                              (tabFocus)="onTabFocus($event)"
+                              (currentTabModelChanged)="currentTabModelChanged($event)">
           </vic-configure-tabs>
         </div>
       </div>
@@ -26,9 +40,9 @@
       <div class="wizzard-cli-container">
         <vic-cli-command *ngIf="showCli"
                          [disabled]="isCurrentTabInvalid()"
-                         [payload]="modelPayload.asObservable()"
                          [commandType]="'configure'"
-                         [showCliCommand]="false">
+                         [showCliCommand]="false"
+                         [payload]="currentTabModelPayload.asObservable()">
         </vic-cli-command>
       </div>
 

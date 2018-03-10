@@ -6,8 +6,8 @@
     <clr-tab-content *clrIfActive>
       <vic-vch-general [readOnly]="readOnly"
                        [model]="model.general"
-                       (modelChanged)="modelChange($event)"
-                       (focus)="focusTab($event)">
+                       (focus)="focusTab($event)"
+                       (modelChanged)="modelChange($event)">
       </vic-vch-general>
     </clr-tab-content>
   </clr-tab>
@@ -16,9 +16,10 @@
     <button clrTabLink>Compute</button>
     <clr-tab-content *clrIfActive>
       <vic-vch-compute [readOnly]="readOnly"
-                       [model]="model.compute"
-                       (modelChanged)="modelChange($event)"
-                       (focus)="focusTab($event)"></vic-vch-compute>
+                       [model]="model.computeCapacity"
+                       (focus)="focusTab($event)"
+                       (modelChanged)="modelChange($event)">
+      </vic-vch-compute>
     </clr-tab-content>
   </clr-tab>
   <clr-tab>

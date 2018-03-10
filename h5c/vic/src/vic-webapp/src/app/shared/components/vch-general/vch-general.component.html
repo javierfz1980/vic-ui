@@ -11,7 +11,7 @@
     </clr-stack-block>
     <clr-stack-block>
       <clr-stack-label>Debug</clr-stack-label>
-      <clr-stack-content>{{model.debug}}</clr-stack-content>
+      <clr-stack-content>{{model.debug ? debugOptions[model.debug].display : debugOptions[0].display}}</clr-stack-content>
     </clr-stack-block>
     <clr-stack-block>
       <clr-stack-label>Syslog</clr-stack-label>
@@ -168,10 +168,9 @@
           <div class="select form-control">
             <select id="debug-level-selector"
                     formControlName="debug">
-              <option value="0">0 - Verbose logging is disabled</option>
-              <option value="1">1 - Provides extra verbosity in the logs</option>
-              <option value="2">2 - Exposes server on more interfaces, launches pprof in container VMs</option>
-              <option value="3">3 - Disables recovery logic and logs sensitive data</option>
+              <option *ngFor="let option of debugOptions" [value]="option.value">
+                {{option.display}}
+              </option>
             </select>
           </div>
 

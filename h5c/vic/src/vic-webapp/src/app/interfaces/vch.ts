@@ -240,7 +240,7 @@ export interface VchApiContainer {
 
 export interface VchUi {
   general?: VchUiGeneral;
-  compute?: VchUiCompute;
+  computeCapacity?: VchUiCompute;
 }
 
 export type VchUiModelTypes = VchUiGeneral | VchUiCompute;

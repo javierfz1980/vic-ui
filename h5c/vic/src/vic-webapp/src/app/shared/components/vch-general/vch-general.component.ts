@@ -1,9 +1,8 @@
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
-import {FormBuilder, Validators} from '@angular/forms';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs/Subscription';
 import {ipOrFqdnPattern, numberPattern, supportedCharsPattern} from '../../utils/validators';
-import {VchApiGeneral, VchUiGeneral} from '../../../interfaces/vch';
-import {VchForm} from '../vch-form';
+import {VchUiGeneral} from '../../../interfaces/vch';
 import {Observable} from 'rxjs/Observable';
 import {CreateVchWizardService} from '../../../create-vch-wizard/create-vch-wizard.service';
 
@@ -12,7 +11,7 @@ import {CreateVchWizardService} from '../../../create-vch-wizard/create-vch-wiza
   templateUrl: './vch-general.component.html',
   styleUrls: ['./vch-general.component.scss']
 })
-export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
+export class VchGeneralComponent  implements OnInit, OnDestroy {
 
   @Input() model: VchUiGeneral;
   @Input() readOnly: boolean;
@@ -22,20 +21,25 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
 
   private containerNameConventionPattern = /^(.*)({id}|{name})(.*)$/;
   private syslogAddressPattern = /^(tcp|udp):\/\/(.*):(.*)$/;
+  private debugOptions: {value: number, display: string}[] = [
+    {value: 0, display: '0 - Verbose logging is disabled'},
+    {value: 1, display: '1 - Provides extra verbosity in the logs'},
+    {value: 2, display: '2 - Exposes server on more interfaces, launches pprof in container VMs'},
+    {value: 3, display: '3 - Disables recovery logic and logs sensitive data'}
+  ];
   private formValueChangesSubscription: Subscription;
   private readonly initialModel: VchUiGeneral = {
     name: 'virtual-container-host',
     containerNameConvention: '',
-    debug: 0,
+    debug: this.debugOptions[0].value,
     syslogAddress: ''
   };
 
-  vicApplianceIp: string;
+  public vicApplianceIp: string;
+  public form: FormGroup;
 
   constructor(private formBuilder: FormBuilder,
-              private createWzService: CreateVchWizardService) {
-    super();
-  }
+              private createWzService: CreateVchWizardService) {}
 
   ngOnInit() {
     if (!this.model) {
@@ -61,7 +65,7 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
       containerNameConventionPrefix,
       containerNameConvention,
       containerNameConventionPostfix,
-      debug: this.model.debug,
+      debug: this.model.debug || 0,
       syslogTransport,
       syslogHost: [syslogHost, [Validators.pattern(ipOrFqdnPattern)]],
       syslogPort: [syslogPort, [Validators.maxLength(5),
@@ -71,8 +75,11 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
     this.modelChanged.emit(this.model);
     this.focus.emit(this);
 
-    this.formValueChangesSubscription = this.form.valueChanges.subscribe(value => {
+    this.formValueChangesSubscription = this.form
+      .valueChanges
+      .subscribe(value => {
       if (this.form.valid) {
+        console.log(value.name.trim());
         this.model.name = value.name.trim();
         this.model.debug = value.debug;
 
@@ -94,12 +101,17 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
         if (syslogHost && syslogPort) {
           this.model.syslogAddress = `${syslogTransport}://${syslogHost}:${syslogPort}`;
         }
+
         this.modelChanged.emit(this.model);
       }
     });
   }
 
   onPageLoad() { }
+
+  ngOnDestroy() {
+    this.formValueChangesSubscription.unsubscribe();
+  }
 
   /**
    * Async validation for the Name section
@@ -121,7 +133,8 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
       })
       .switchMap((arr) => {
         this.vicApplianceIp = arr[0];
-
+        console.log('aca2: ', this.form.get('name').value);
+        console.log('aca: ', arr[1]);
         const isUnique = arr[1];
         if (!isUnique) {
           this.form.get('name').setErrors({
@@ -135,11 +148,12 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy() {
-    this.formValueChangesSubscription.unsubscribe();
+  isFormControlInvalid(controlName: string) {
+    const control = this.form.get(controlName);
+    return control.invalid && (control.dirty || control.touched);
   }
 
-  toApiPayload(): VchApiGeneral {
+  /*toApiPayload(): VchApiGeneral {
     return {
       name: this.model.name,
       debug: this.model.debug,
@@ -148,5 +162,5 @@ export class VchGeneralComponent extends VchForm implements OnInit, OnDestroy {
         name_convention: this.model.containerNameConvention
       }
     }
-  }
+  }*/
 }

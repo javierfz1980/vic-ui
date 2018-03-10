@@ -11,7 +11,7 @@ export abstract class ConfigureBase {
         debug: vch.debug,
         syslogAddress: vch.syslog_addr || ''
       },
-      compute: {
+      computeCapacity: {
         cpuLimit: vch.compute.cpu.limit ? vch.compute.cpu.limit.value : null,
         memoryLimit: vch.compute.memory.limit ? vch.compute.memory.limit.value : null,
         cpuReservation: vch.compute.cpu.reservation ? vch.compute.cpu.reservation.value : null,

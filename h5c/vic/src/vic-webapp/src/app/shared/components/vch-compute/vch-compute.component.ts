@@ -124,9 +124,18 @@ export class VchComputeComponent implements OnInit, OnDestroy {
 
     this.modelChanged.emit(this.model);
 
-    this.formValueChangesSubscription = this.form.valueChanges
+    this.formValueChangesSubscription = this.form
+      .valueChanges
       .takeWhile(() => this.form.valid)
-      .subscribe(value =>  this.modelChanged.emit(this.form.value))
+      .subscribe(value =>  {
+        // this.model.computeResource;
+        this.model = {
+          ...this.form.value,
+          computeResource: this.model.computeResource
+        };
+
+        this.modelChanged.emit(this.model);
+      })
   }
 
   /**
