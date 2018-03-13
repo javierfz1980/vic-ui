@@ -9,7 +9,7 @@ import {
 
 export function processPayloadFromUiToApi(payload): VchApi {
 
-  let processedPayload: VchApi;
+  const processedPayload: VchApi = {};
 
   // Compute ----------------------------------------------------------------------------
 
@@ -30,11 +30,14 @@ export function processPayloadFromUiToApi(payload): VchApi {
           units: 'MiB',
           value: parseInt(payload.computeCapacity.memory, 10)
         }
-      },
-      resource: {
-        name: payload.computeCapacity.computeResource
       }
     };
+
+    if (payload.computeCapacity.computeResource) {
+      vchCompute.resource = {
+        name: payload.computeCapacity.computeResource
+      }
+    }
 
     if (payload.computeCapacity.cpuReservation) {
       vchCompute.cpu.reservation = {
@@ -56,9 +59,9 @@ export function processPayloadFromUiToApi(payload): VchApi {
 
   // Endpoint ---------------------------------------------------------------------------
 
-  let vchEndpoint: VchApiEndpoint = {};
+  let vchEndpoint: VchApiEndpoint;
 
-  if (payload.operations || payload.computeCapacity) {
+  if (payload.operations || (payload.computeCapacity && payload.computeCapacity.endpointCpu)) {
 
     vchEndpoint = {};
 
@@ -179,9 +182,6 @@ export function processPayloadFromUiToApi(payload): VchApi {
 
       if (payload.networks.managementNetworkIp) {
         vchNetwork.management.static = payload.networks.managementNetworkIp;
-        /*processedPayload.network['management']['static'] = {
-          ip: payload.networks.managementNetworkIp
-        };*/
 
         vchNetwork.management.gateway = {
           address: payload.networks.managementNetworkGateway
@@ -330,18 +330,6 @@ export function processPayloadFromUiToApi(payload): VchApi {
     };
   }
 
-  // ------------------------------------------------------------------------------------
-
-  processedPayload = {
-    compute: vchCompute,
-    network: vchNetwork,
-    storage: vchStorage,
-    auth: vchAuth,
-    endpoint: vchEndpoint,
-    registry: vchRegistry,
-    container: vchContainer
-  };
-
   // General ----------------------------------------------------------------------------
 
   // TODO: add vch vm name template
@@ -361,12 +349,41 @@ export function processPayloadFromUiToApi(payload): VchApi {
 
   }
 
+  // ------------------------------------------------------------------------------------
+
+  if (vchCompute) {
+    processedPayload.compute = vchCompute;
+  }
+
+  if (vchNetwork) {
+    processedPayload.network = vchNetwork;
+  }
+
+  if (vchStorage) {
+    processedPayload.storage = vchStorage;
+  }
+
+  if (vchAuth) {
+    processedPayload.auth = vchAuth;
+  }
+
+  if (vchEndpoint) {
+    processedPayload.endpoint = vchEndpoint;
+  }
+
+  if (vchRegistry) {
+    processedPayload.registry = vchRegistry;
+  }
+
+  if (vchContainer) {
+    processedPayload.container = vchContainer;
+  }
+
   return processedPayload;
 }
 
 
 export function processPayloadFromApiToUi (vch: VchApi): VchUi {
-  console.log('configure view VchApi: ', vch);
   const uiModel: VchUi = {
     general: {
       name: vch.name,
@@ -386,6 +403,5 @@ export function processPayloadFromApiToUi (vch: VchApi): VchUi {
       computeResource: vch.compute.resource.id
     }
   };
-  console.log('configure view VchUi: ', uiModel);
   return uiModel;
 }

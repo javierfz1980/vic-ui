@@ -79,7 +79,6 @@ export class VchGeneralComponent  implements OnInit, OnDestroy {
       .valueChanges
       .subscribe(value => {
       if (this.form.valid) {
-        console.log(value.name.trim());
         this.model.name = value.name.trim();
         this.model.debug = value.debug;
 
@@ -133,8 +132,6 @@ export class VchGeneralComponent  implements OnInit, OnDestroy {
       })
       .switchMap((arr) => {
         this.vicApplianceIp = arr[0];
-        console.log('aca2: ', this.form.get('name').value);
-        console.log('aca: ', arr[1]);
         const isUnique = arr[1];
         if (!isUnique) {
           this.form.get('name').setErrors({

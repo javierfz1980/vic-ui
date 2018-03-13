@@ -68,7 +68,7 @@ export interface VchApiCompute {
       level: SharesLevel
     }
   },
-  resource: {
+  resource?: {
     id?: string,
     name: string
   }
@@ -78,11 +78,11 @@ export interface VchUiCompute {
   cpuLimit?: number | string;
   memoryLimit?: number | string;
   cpuReservation?: number;
-  cpuShares: SharesLevel;
-  memoryShares: SharesLevel;
+  cpuShares?: SharesLevel;
+  memoryShares?: SharesLevel;
   memoryReservation?: number;
-  endpointCpu: number;
-  endpointMemory: number;
+  endpointCpu?: number;
+  endpointMemory?: number;
   computeResource?: string;
 }
 

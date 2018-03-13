@@ -48,6 +48,7 @@ export class VchComputeComponent implements OnInit, OnDestroy {
   public selectedResourceObjRef: string;
   public serversInfo: ServerInfo[];
   public selectedComputeResourcePath: Observable<string>;
+  public isConfigure = false;
 
   private _selectedComputeResource: string;
   private formValueChangesSubscription: Subscription;
@@ -62,7 +63,6 @@ export class VchComputeComponent implements OnInit, OnDestroy {
     endpointMemory: endpointMemoryDefaultValue,
     computeResource: null
   };
-
 
   @ViewChildren(ComputeResourceTreenodeComponent)
   treenodeComponents: QueryList<ComputeResourceTreenodeComponent>;
@@ -89,7 +89,6 @@ export class VchComputeComponent implements OnInit, OnDestroy {
 
     Observable.zip(...obsArr)
       .subscribe(results => {
-        console.log('datacenter: ', results);
         this.datacenter = flattenArray(results);
       });
 
@@ -98,8 +97,9 @@ export class VchComputeComponent implements OnInit, OnDestroy {
         this.inAdvancedMode = true;
       }
       if (this.model.computeResource) {
+        this.isConfigure = true;
         this.selectedComputeResourcePath = this.configureService
-          .loadComputeResourcePath(this.serversInfo, this.model.computeResource);
+          .loadComputeResourcePath(this.serversInfo, this.model.computeResource)
       }
     } else {
       this.model = this.initialModel;
@@ -129,26 +129,30 @@ export class VchComputeComponent implements OnInit, OnDestroy {
       memoryShares: this.model.memoryShares || 'normal'
     });
 
-    this.modelChanged.emit(this.model);
+    this.emitCurrentModel();
 
     this.formValueChangesSubscription = this.form
       .valueChanges
       .takeWhile(() => this.form.valid)
       .subscribe(value =>  {
-        // this.model.computeResource;
-        this.model = {
-          ...this.form.value,
-          computeResource: this.model.computeResource
-        };
-
-        this.modelChanged.emit(this.model);
+        this.emitCurrentModel();
       })
   }
 
-  /*loadDefaulComputeResourcePath(serversInfo: ServerInfo[], resourceId: string) {
-    this.configureService.loadComputeResourcePath(serversInfo, resourceId)
-      .subscribe(data => console.log('loadDefaulComputeResourcePath: ', data));
-  }*/
+  emitCurrentModel() {
+    if (this.inAdvancedMode) {
+      this.model = {...this.form.value}
+    } else {
+      this.model = {
+        cpuLimit: this.form.value.cpuLimit,
+        memoryLimit: this.form.value.memoryLimit,
+      }
+    }
+    /*if (!this.model.computeResource) {
+      this.model.computeResource = this._selectedComputeResource;
+    }*/
+    this.modelChanged.emit(this.model);
+  }
 
   /**
    * Get the latest list of Hosts, VirtualApps and ResourcePools
@@ -159,7 +163,6 @@ export class VchComputeComponent implements OnInit, OnDestroy {
     this.createWzService
       .getHostsAndResourcePools(clusterValue)
       .subscribe(resources => {
-        console.log('resources: ', resources);
         this.resources = resources;
         this.isTreeLoading = false;
       });
@@ -190,7 +193,6 @@ export class VchComputeComponent implements OnInit, OnDestroy {
     parentClusterObj?: ComputeResource | any;
     datacenterObj: ComputeResource | any
   }) {
-    console.log('selectComputeResource: ', payload);
     const nodeTypeId = payload.obj.nodeTypeId;
     const isCluster = nodeTypeId === DC_CLUSTER;
     const resourceObj = payload.obj.objRef;
@@ -280,11 +282,7 @@ export class VchComputeComponent implements OnInit, OnDestroy {
   }
 
   get selectedComputeResource() {
-    // return this._selectedComputeResource;
-    // console.log('aca');
-    return (this.model.computeResource &&
-      this.model.computeResource !== this.initialModel.computeResource) ?
-      this.model.computeResource : this._selectedComputeResource;
+    return this._selectedComputeResource;
   }
 
   onPageLoad() {
@@ -299,7 +297,7 @@ export class VchComputeComponent implements OnInit, OnDestroy {
     let formErrors = null;
     const results: any = {};
 
-    if (!this.selectedComputeResource) {
+    if (!this.isConfigure && !this.selectedComputeResource) {
       errs.push('Please choose a valid compute resource');
       formErrors = { invalidComputeResource: true };
     }
@@ -312,9 +310,11 @@ export class VchComputeComponent implements OnInit, OnDestroy {
       const cpuLimitValue = this.form.get('cpuLimit').value;
       const memoryLimitValue = this.form.get('memoryLimit').value;
 
-      results['computeResource'] = this.selectedComputeResource;
       results['cpu'] = unlimitedPattern.test(cpuLimitValue) ? '0' : cpuLimitValue;
       results['memory'] = unlimitedPattern.test(memoryLimitValue) ? '0' : memoryLimitValue;
+      if (!this.isConfigure) {
+        results['computeResource'] = this.selectedComputeResource;
+      }
       if (this.inAdvancedMode) {
         results['cpuReservation'] = this.form.get('cpuReservation').value;
         results['cpuShares'] = this.form.get('cpuShares').value;
@@ -329,6 +329,7 @@ export class VchComputeComponent implements OnInit, OnDestroy {
 
   toggleAdvancedMode() {
     this.inAdvancedMode = !this.inAdvancedMode;
+    this.emitCurrentModel();
   }
 
   getDcs (serverInfo: ServerInfo): ComputeResource[] {

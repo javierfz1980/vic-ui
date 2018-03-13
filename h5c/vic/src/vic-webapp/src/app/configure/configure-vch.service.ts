@@ -47,31 +47,34 @@ export class ConfigureVchService {
 
   constructor(private httpClient: HttpClient,
               private createVchWizardService: CreateVchWizardService,
-              private globalsService: GlobalsService) {}
+              private globalsService: GlobalsService) {
+  }
+
+  getServiceHostAndTkt(vch: VirtualContainerHost): Observable<any> {
+    return Observable.combineLatest(
+      this.createVchWizardService.getVicApplianceIp(),
+      this.createVchWizardService.acquireCloneTicket(vch.id.split(':')[4]))
+  }
+
+  getVchId(vch: VirtualContainerHost): string {
+    return vch.id.split(':')[3];
+  }
+
+  getVc(vch: VirtualContainerHost): ServerInfo {
+    return  getServerInfoByVchObjRef(
+      this.globalsService.getWebPlatform().getUserSession().serversInfo,
+      vch
+    );
+  }
 
   getVchInfo(vchIdStr: string): Observable<VchApi> {
-
-    // --- HARCODED DATA --------------------------------------------------------------
-    // const vch = 'urn:vmomi:VirtualMachine:vm-171:816c4bdf-dbeb-4087-ba84-6cee1da73098'};
-    // const targetHostname = 'sc-rdops-vm03-dhcp-66-193.eng.vmware.com';
-    // const targetThumbprint = '2D:03:4E:02:D6:1D:CE:7C:6D:68:E3:87:64:11:45:28:B9:56:0B:C4';
-    // --------------------------------------------------------------------------------
-
     const vch = <VirtualContainerHost>{id: vchIdStr};
-    return Observable.combineLatest(
-        this.createVchWizardService.getVicApplianceIp(),
-        this.createVchWizardService.acquireCloneTicket(vch.id.split(':')[4]))
+    return this.getServiceHostAndTkt(vch)
       .switchMap(([serviceHost, cloneTicket]) => {
-        const vchId = vch.id.split(':')[3];
-        const servicePort = VIC_APPLIANCE_PORT;
-        const vc = getServerInfoByVchObjRef(
-          this.globalsService.getWebPlatform().getUserSession().serversInfo,
-          vch
-        );
-
+        const vc = this.getVc(vch);
         const targetHostname = vc ? vc.name : null;
         const targetThumbprint = vc ? vc.thumbprint : null;
-        const url = `https://${serviceHost}:${servicePort}/container/target/${targetHostname}/vch/${vchId}?thumbprint=${targetThumbprint}`;
+        const url = `https://${serviceHost}:${VIC_APPLIANCE_PORT}/container/target/${targetHostname}/vch/${this.getVchId(vch)}?thumbprint=${targetThumbprint}`;
         const headers  = new HttpHeaders({
           'Content-Type': 'application/json',
           'X-VMWARE-TICKET': cloneTicket
@@ -83,20 +86,12 @@ export class ConfigureVchService {
 
   patchVch(vchIdStr: string, payload: VchApi): Observable<VchApi> {
     const vch = <VirtualContainerHost>{id: vchIdStr};
-    return Observable.combineLatest(
-      this.createVchWizardService.getVicApplianceIp(),
-      this.createVchWizardService.acquireCloneTicket(vch.id.split(':')[4]))
+    return this.getServiceHostAndTkt(vch)
       .switchMap(([serviceHost, cloneTicket]) => {
-        const vchId = vch.id.split(':')[3];
-        const servicePort = VIC_APPLIANCE_PORT;
-        const vc = getServerInfoByVchObjRef(
-          this.globalsService.getWebPlatform().getUserSession().serversInfo,
-          vch
-        );
-
+        const vc = this.getVc(vch);
         const targetHostname = vc ? vc.name : null;
         const targetThumbprint = vc ? vc.thumbprint : null;
-        const url = `https://${serviceHost}:${servicePort}/container/target/${targetHostname}/vch/${vchId}?thumbprint=${targetThumbprint}`;
+        const url = `https://${serviceHost}:${VIC_APPLIANCE_PORT}/container/target/${targetHostname}/vch/${this.getVchId(vch)}?thumbprint=${targetThumbprint}`;
         const headers  = new HttpHeaders({
           'Content-Type': 'application/merge-patch+json',
           'X-VMWARE-TICKET': cloneTicket
@@ -105,7 +100,6 @@ export class ConfigureVchService {
         return this.httpClient.patch<VchApi>(url, payload, {headers: headers})
       });
   }
-
 
   getHostsAndResourcePoolsFromComputeResource(computeResourceSources: ComputeResource[]):
     Observable<ComputeResourceWithChilds[]> {
@@ -122,7 +116,6 @@ export class ConfigureVchService {
   }
 
   loadComputeResourcePath(serverInfos: ServerInfo[], resourceId: string): Observable<string> {
-    console.log('serverInfos: ', serverInfos);
     return Observable.from(serverInfos)
       .concatMap((serverInfo: ServerInfo) => {
         return this.createVchWizardService.getClustersList(serverInfo.serviceGuid)

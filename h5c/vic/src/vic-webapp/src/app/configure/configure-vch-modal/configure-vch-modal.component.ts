@@ -129,8 +129,6 @@ export class ConfigureVchModalComponent implements OnInit, OnDestroy {
       this.currentTab.onCommit()
         .switchMap((payload: VchUi) => {
           const apiPayload = processPayloadFromUiToApi(payload);
-          console.log('patch api not implemented - uiPayload: ', payload);
-          console.log('patch api not implemented - ApiPayload: ', apiPayload);
           return this.configureVchService.patchVch(this.vchId, apiPayload);
         })
         .subscribe(

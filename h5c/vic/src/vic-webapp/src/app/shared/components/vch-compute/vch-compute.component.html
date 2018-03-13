@@ -4,7 +4,14 @@
     <clr-stack-header>Resource</clr-stack-header>
     <clr-stack-block>
       <clr-stack-label>Cluster/Resource pool</clr-stack-label>
-      <clr-stack-content>{{model.computeResource}}</clr-stack-content>
+      <clr-stack-content>
+        <ng-container *ngIf="selectedComputeResourcePath | async as path; else loadingComputeResourcePath">
+          {{path}}
+        </ng-container>
+        <ng-template #loadingComputeResourcePath>
+          <div class="spinner spinner-sm"></div>
+        </ng-template>
+      </clr-stack-content>
     </clr-stack-block>
   </clr-stack-view>
 
@@ -77,7 +84,7 @@
           </label>
 
         </div>
-        <ng-container *ngIf="model.computeResource; else resourceTree">
+        <ng-container *ngIf="isConfigure; else resourceTree">
           <div class="col-xs-6">
             <label *ngIf="selectedComputeResourcePath | async as path; else loadingComputeResourcePath">
               {{path}}

@@ -155,7 +155,6 @@ export class CreateVchWizardComponent implements OnInit {
         ).subscribe(([cloneTicket, payload, applianceIp]) => {
 
         if (payload) {
-
           this.errorFlag = false;
           this.loading = true;
 

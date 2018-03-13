@@ -29,8 +29,8 @@ export class CliCommandComponent implements OnInit {
   public form: FormGroup;
   public copySucceeded: boolean = null;
   public cliCommand: Observable<string>;
-  private skippedParams = [
-    'computeResource'
+  private configureSkippedParams = [
+    'computeResource',
   ];
 
   constructor(private formBuilder: FormBuilder) {
@@ -103,61 +103,66 @@ export class CliCommandComponent implements OnInit {
     results.push(createCommand);
 
     for (const section in payload) {
-      if (!payload[section]) {
+      if (!payload[section] || !this.keyIsAvailable(section)) {
         continue;
       }
       // if there is only one entry in the section and it's of string type
       // add it to results array here
-      let val = payload[section];
-      if (typeof val === 'string' || typeof val === 'boolean' || typeof val === 'number') {
-        if (typeof val === 'string') {
-          val = this.escapeSpecialCharsForCLI(val);
-          if (!val.trim()) {
-            continue;
-          }
-        }
-        results.push(`--${section} ${this.valueToString(val)}`);
-        continue;
-      }
-      for (const key in payload[section]) {
-        if (!(payload[section][key]) || payload[section][key] === '0') {
+      const value0 = payload[section];
+      if (typeof value0 === 'string' || typeof value0 === 'boolean' || typeof value0 === 'number') {
+
+        if (typeof value0 === 'string' && !value0.trim()) {
           continue;
         }
-        const newKey = key.replace(camelCasePattern, '$1-$2').toLowerCase();
-        let value = payload[section][key];
-        if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
-          if (typeof value === 'string') {
-            value = this.escapeSpecialCharsForCLI(value);
-            if (!value.trim()) {
-              continue;
-            }
+        results.push(`--${this.keyFixCamelCase(section)} ${this.valueToString(value0)}`);
+        continue;
+      }
+
+      for (const key in payload[section]) {
+
+        if (!(payload[section][key]) || payload[section][key] === '0' || !this.keyIsAvailable(section)) {
+          continue;
+        }
+
+        const value1 = payload[section][key];
+        if (typeof value1 === 'string' || typeof value1 === 'boolean' || typeof value1 === 'number') {
+
+          if (typeof value1 === 'string' && !value1.trim()) {
+            continue;
           }
-          results.push(`--${newKey} ${this.valueToString(value)}`);
+          results.push(`--${this.keyFixCamelCase(key)} ${this.valueToString(value1)}`);
 
         } else {
+
           // repeat adding multiple, optional fields with the same key
-          for (const i in value) {
-            if (!value[i] || value[i] === '0') {
+          for (const i in value1) {
+
+            if (!value1[i] || value1[i] === '0' || !this.keyIsAvailable(section)) {
               continue;
             }
 
-            const rawValue = value[i];
-            if (typeof rawValue === 'string') {
-              if (!rawValue.trim()) {
+            const value2 = value1[i];
+            if (typeof value2 === 'string' || typeof value1 === 'boolean' || typeof value1 === 'number') {
+
+              if (typeof value2 === 'string' && !value2.trim()) {
                 continue;
               }
-              results.push(`--${newKey} ${rawValue}`);
+              results.push(`--${this.keyFixCamelCase(key)} ${this.valueToString(value2)}`);
 
-            } else if (typeof rawValue === 'object') {
-              if (isUploadableFileObject(rawValue)) {
-                results.push(`--${newKey} ${rawValue.name}`);
+            } else {
+
+              if (isUploadableFileObject(value2)) {
+                results.push(`--${this.keyFixCamelCase(key)} ${this.valueToString(value2.name)}`);
+
               } else {
-                for (const j in rawValue) {
-                  if (!rawValue[j] || rawValue[j] === '0') {
+
+                for (const j in value2) {
+                  if (!value2[j] || value2[j] === '0' || !this.keyIsAvailable(section)) {
                     continue;
                   }
-                  results.push(`--${j.replace(camelCasePattern, '$1-$2').toLowerCase()} ${this.escapeSpecialCharsForCLI(rawValue[j])}`);
+                  results.push(`--${this.keyFixCamelCase(j)} ${this.valueToString(value2[j])}`);
                 }
+
               }
             }
           }
@@ -169,16 +174,25 @@ export class CliCommandComponent implements OnInit {
 
   private valueToString(value: any): string {
     if (typeof value === 'string') {
-      return value;
+      return this.escapeSpecialCharsForCLI(value);
     } else if (typeof value === 'boolean') {
           return '';
     } else if (typeof value === 'number') {
-      return value.toString();
+      return this.escapeSpecialCharsForCLI(value.toString());
     }
+  }
+
+  private keyFixCamelCase(value: any): string {
+    return value.replace(camelCasePattern, '$1-$2').toLowerCase();
   }
 
   private escapeSpecialCharsForCLI(text) {
     return text.replace(/([() ])/g, '\\$&');
+  }
+
+  private keyIsAvailable(key: string): boolean {
+    return this.commandType === 'configure' ?
+      (this.configureSkippedParams.indexOf(key) === -1) : true;
   }
 
   /**
