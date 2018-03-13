@@ -1,0 +1,22 @@
+<div *ngIf="vchInfo | async as vch; else loadingVchInfo">
+  <div class="stack-header">
+    <div class="stack-title"></div>
+    <button class="stack-action btn btn-sm"
+            type="button"
+            (click)="launchVchConfigureModal()">
+      Edit...
+    </button>
+  </div>
+
+  <vic-configure-tabs [readOnly]="true" [model]="vch"></vic-configure-tabs>
+
+</div>
+
+
+<ng-template #loadingVchInfo>
+  <div class="configure-loading-wrapper">
+    <span class="spinner">
+    Loading...
+    </span>
+  </div>
+</ng-template>

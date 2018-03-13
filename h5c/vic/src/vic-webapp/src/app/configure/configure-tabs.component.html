@@ -1,0 +1,55 @@
+<!-- Tabs -->
+<clr-tabs>
+  <!-- General -->
+  <clr-tab>
+    <button clrTabLink>General</button>
+    <clr-tab-content *clrIfActive>
+      <vic-vch-general [readOnly]="readOnly"
+                       [model]="model.general"
+                       (focus)="focusTab($event)"
+                       (modelChanged)="modelChange($event)">
+      </vic-vch-general>
+    </clr-tab-content>
+  </clr-tab>
+  <!-- Compute -->
+  <clr-tab>
+    <button clrTabLink>Compute</button>
+    <clr-tab-content *clrIfActive>
+      <vic-vch-compute [readOnly]="readOnly"
+                       [model]="model.computeCapacity"
+                       (focus)="focusTab($event)"
+                       (modelChanged)="modelChange($event)">
+      </vic-vch-compute>
+    </clr-tab-content>
+  </clr-tab>
+  <clr-tab>
+    <button clrTabLink>Storage</button>
+    <clr-tab-content >
+      storage stack view
+    </clr-tab-content>
+  </clr-tab>
+  <clr-tab>
+    <button clrTabLink>Network</button>
+    <clr-tab-content >
+      network stack view
+    </clr-tab-content>
+  </clr-tab>
+  <clr-tab>
+    <button clrTabLink>Security</button>
+    <clr-tab-content>
+      security stack view
+    </clr-tab-content>
+  </clr-tab>
+  <clr-tab>
+    <button clrTabLink>Registry Access</button>
+    <clr-tab-content>
+      registry access stack view
+    </clr-tab-content>
+  </clr-tab>
+  <clr-tab>
+    <button clrTabLink>Operations User</button>
+    <clr-tab-content>
+      operations user stack view
+    </clr-tab-content>
+  </clr-tab>
+</clr-tabs>
