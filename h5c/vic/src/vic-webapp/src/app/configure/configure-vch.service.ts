@@ -26,12 +26,21 @@ import { GlobalsService } from '../shared/index';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import {
-  getServerInfoByVchObjRef
+  getServerInfoByVchObjRef, getServerServiceGuidFromObj
 } from '../shared/utils/object-reference';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {VirtualContainerHost} from '../vch-view/vch.model';
 import {CreateVchWizardService} from '../create-vch-wizard/create-vch-wizard.service';
-import {VchApi} from '../interfaces/vch';
+import {VchApi, VchUi} from '../interfaces/vch';
+import {Headers, RequestOptions} from '@angular/http';
+import {processPayloadFromUiToApi} from '../shared/utils/vch/vch-utils';
+import {ComputeResource} from '../interfaces/compute.resource';
+import {ServerInfo} from '../shared/vSphereClientSdkTypes';
+
+export interface ComputeResourceWithChilds {
+  computeResource: ComputeResource;
+  childComputeResources: ComputeResource[]
+}
 
 @Injectable()
 export class ConfigureVchService {
@@ -71,4 +80,74 @@ export class ConfigureVchService {
         return this.httpClient.get<VchApi>(url, { headers: headers })
       });
   }
+
+  patchVch(vchIdStr: string, payload: VchApi): Observable<VchApi> {
+    const vch = <VirtualContainerHost>{id: vchIdStr};
+    return Observable.combineLatest(
+      this.createVchWizardService.getVicApplianceIp(),
+      this.createVchWizardService.acquireCloneTicket(vch.id.split(':')[4]))
+      .switchMap(([serviceHost, cloneTicket]) => {
+        const vchId = vch.id.split(':')[3];
+        const servicePort = VIC_APPLIANCE_PORT;
+        const vc = getServerInfoByVchObjRef(
+          this.globalsService.getWebPlatform().getUserSession().serversInfo,
+          vch
+        );
+
+        const targetHostname = vc ? vc.name : null;
+        const targetThumbprint = vc ? vc.thumbprint : null;
+        const url = `https://${serviceHost}:${servicePort}/container/target/${targetHostname}/vch/${vchId}?thumbprint=${targetThumbprint}`;
+        const headers  = new HttpHeaders({
+          'Content-Type': 'application/merge-patch+json',
+          'X-VMWARE-TICKET': cloneTicket
+        });
+
+        return this.httpClient.patch<VchApi>(url, payload, {headers: headers})
+      });
+  }
+
+
+  getHostsAndResourcePoolsFromComputeResource(computeResourceSources: ComputeResource[]):
+    Observable<ComputeResourceWithChilds[]> {
+      return Observable.from(computeResourceSources)
+        .concatMap((cr: ComputeResource) => {
+          if (!cr['hasChildren']) {
+            return Observable.of(null);
+          }
+          return this.httpClient
+            .get<ComputeResource[]>(`/ui/tree/children?nodeTypeId=${cr.nodeTypeId}&objRef=${cr.objRef}&treeId=DcHostsAndClustersTree`)
+            .map((childComputeResources: ComputeResource[]) => ({computeResource: cr, childComputeResources: childComputeResources}))
+        })
+        .toArray();
+  }
+
+  loadComputeResourcePath(serverInfos: ServerInfo[], resourceId: string): Observable<string> {
+    console.log('serverInfos: ', serverInfos);
+    return Observable.from(serverInfos)
+      .concatMap((serverInfo: ServerInfo) => {
+        return this.createVchWizardService.getClustersList(serverInfo.serviceGuid)
+          .switchMap((resources: ComputeResource[]) => {
+            return this.getHostsAndResourcePoolsFromComputeResource(resources)
+              .switchMap((clustersWithHostsAndRP: ComputeResourceWithChilds[]) => {
+                const selectedComputeResourcePath: ComputeResourceWithChilds = clustersWithHostsAndRP
+                  .find(clustersWithHostsAndRPItem =>
+                    clustersWithHostsAndRPItem.childComputeResources
+                      .some(computeResource => computeResource.objRef
+                        .split(':')[3] === resourceId));
+                const resourceName: string = selectedComputeResourcePath.computeResource.text;
+                const resourceChildName: string = selectedComputeResourcePath.childComputeResources
+                  .find(clustersWithHostsAndRPItem => clustersWithHostsAndRPItem.objRef
+                    .split(':')[3] === resourceId).text;
+                return this.createVchWizardService.getDatacenterForResource(selectedComputeResourcePath.computeResource.objRef)
+                  .map(dc => `${serverInfo.name}/${dc['name']}/${resourceName}/${resourceChildName}`);
+                // return `${serverInfo.name}/${resourceName}/${resourceChildName}`;
+              })
+          })
+      })
+      .catch(error => {
+        console.error(`Resource with id: ${resourceId} was not found`);
+        return Observable.of(resourceId)
+      });
+  }
+
 }

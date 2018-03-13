@@ -24,8 +24,8 @@ import {
 import {ConfigureVchService} from '../configure-vch.service';
 import {ActivatedRoute} from '@angular/router';
 import {Observable} from 'rxjs/Observable';
-import {SharesLevel, VchApi, VchUi} from '../../interfaces/vch';
-import {ConfigureBase} from '../configure-base';
+import {VchUi} from '../../interfaces/vch';
+import {processPayloadFromApiToUi} from '../../shared/utils/vch/vch-utils';
 
 @Component({
   selector: 'vic-configure-vch-view',
@@ -33,7 +33,7 @@ import {ConfigureBase} from '../configure-base';
   templateUrl: './configure-vch-view.component.html'
 })
 
-export class ConfigureVchViewComponent extends ConfigureBase implements OnInit, OnDestroy {
+export class ConfigureVchViewComponent implements OnInit, OnDestroy {
 
   public vchId: string;
   public vchInfo: Observable<VchUi>;
@@ -41,13 +41,12 @@ export class ConfigureVchViewComponent extends ConfigureBase implements OnInit, 
   constructor(private globalsService: GlobalsService,
               private configureVchService: ConfigureVchService,
               private activatedRoute: ActivatedRoute) {
-    super();
   }
 
   ngOnInit() {
     this.vchId = this.activatedRoute.snapshot.url[0].path;
     this.vchInfo = this.configureVchService.getVchInfo(this.vchId)
-      .map(this.mapApiDatatoUiData);
+      .map(processPayloadFromApiToUi);
   }
 
 

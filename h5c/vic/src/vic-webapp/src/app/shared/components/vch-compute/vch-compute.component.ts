@@ -15,6 +15,7 @@ import {DC_CLUSTER} from '../../constants';
 import {GlobalsService} from '../../globals.service';
 import {ComputeResourceTreenodeComponent} from './compute-resource-treenode.component';
 import {Subscription} from 'rxjs/Subscription';
+import {ConfigureVchService} from '../../../configure/configure-vch.service';
 
 const endpointMemoryDefaultValue = 2048;
 
@@ -46,6 +47,10 @@ export class VchComputeComponent implements OnInit, OnDestroy {
   public selectedObjectName: string;
   public selectedResourceObjRef: string;
   public serversInfo: ServerInfo[];
+  public selectedComputeResourcePath: Observable<string>;
+
+  private _selectedComputeResource: string;
+  private formValueChangesSubscription: Subscription;
   private readonly initialModel: VchUiCompute = {
     cpuLimit: 'Unlimited',
     memoryLimit: 'Unlimited',
@@ -55,11 +60,9 @@ export class VchComputeComponent implements OnInit, OnDestroy {
     memoryReservation: 1,
     endpointCpu: 1,
     endpointMemory: endpointMemoryDefaultValue,
-    computeResource: ''
+    computeResource: null
   };
 
-  private _selectedComputeResource: string;
-  private formValueChangesSubscription: Subscription;
 
   @ViewChildren(ComputeResourceTreenodeComponent)
   treenodeComponents: QueryList<ComputeResourceTreenodeComponent>;
@@ -67,36 +70,40 @@ export class VchComputeComponent implements OnInit, OnDestroy {
   constructor(
     private formBuilder: FormBuilder,
     private createWzService: CreateVchWizardService,
-    private globalsService: GlobalsService
+    private globalsService: GlobalsService,
+    private configureService: ConfigureVchService
   ) {}
 
   // TODO: add units selectors to compute fields
 
   ngOnInit() {
 
-    if (this.model && this.model.cpuReservation) {
-      this.inAdvancedMode = true;
-    }
-
-    if (!this.model) {
-      this.model = this.initialModel;
-    }
-
     this.serversInfo = this.globalsService
       .getWebPlatform()
       .getUserSession()
       .serversInfo;
 
-    console.log('serversInfo: ', this.serversInfo);
-
     const obsArr = this.serversInfo
       .map(serverInfo => this.createWzService
-        .getDatacenter(serverInfo.serviceGuid));
+      .getDatacenter(serverInfo.serviceGuid));
 
     Observable.zip(...obsArr)
       .subscribe(results => {
+        console.log('datacenter: ', results);
         this.datacenter = flattenArray(results);
       });
+
+    if (this.model) {
+      if (this.model.cpuReservation) {
+        this.inAdvancedMode = true;
+      }
+      if (this.model.computeResource) {
+        this.selectedComputeResourcePath = this.configureService
+          .loadComputeResourcePath(this.serversInfo, this.model.computeResource);
+      }
+    } else {
+      this.model = this.initialModel;
+    }
 
     this.initForm();
     this.focus.emit(this);
@@ -137,6 +144,11 @@ export class VchComputeComponent implements OnInit, OnDestroy {
         this.modelChanged.emit(this.model);
       })
   }
+
+  /*loadDefaulComputeResourcePath(serversInfo: ServerInfo[], resourceId: string) {
+    this.configureService.loadComputeResourcePath(serversInfo, resourceId)
+      .subscribe(data => console.log('loadDefaulComputeResourcePath: ', data));
+  }*/
 
   /**
    * Get the latest list of Hosts, VirtualApps and ResourcePools
@@ -268,7 +280,11 @@ export class VchComputeComponent implements OnInit, OnDestroy {
   }
 
   get selectedComputeResource() {
-    return this._selectedComputeResource;
+    // return this._selectedComputeResource;
+    // console.log('aca');
+    return (this.model.computeResource &&
+      this.model.computeResource !== this.initialModel.computeResource) ?
+      this.model.computeResource : this._selectedComputeResource;
   }
 
   onPageLoad() {

@@ -21,13 +21,18 @@ import {Modal} from '@clr/angular';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {ActivatedRoute} from '@angular/router';
 import {
+  VchApi,
   VchUi,
   VchUiModelTypes
 } from '../../interfaces/vch';
 import {Observable} from 'rxjs/Observable';
 import {ConfigureVchService} from '../configure-vch.service';
-import {ConfigureBase} from '../configure-base';
 import {ConfigureTabsComponent, VchConfigureTabs} from '../configure-tabs.component';
+import {
+  processPayloadFromApiToUi,
+  processPayloadFromUiToApi
+} from '../../shared/utils/vch/vch-utils';
+import {HttpErrorResponse} from '@angular/common/http';
 
 
 @Component({
@@ -36,7 +41,7 @@ import {ConfigureTabsComponent, VchConfigureTabs} from '../configure-tabs.compon
   templateUrl: './configure-vch-modal.component.html'
 })
 
-export class ConfigureVchModalComponent extends ConfigureBase implements OnInit, OnDestroy {
+export class ConfigureVchModalComponent implements OnInit, OnDestroy {
 
   @ViewChild('modal') modal: Modal;
   @ViewChild('tabsComponent') tabsComponent: ConfigureTabsComponent;
@@ -56,13 +61,12 @@ export class ConfigureVchModalComponent extends ConfigureBase implements OnInit,
               private configureVchService: ConfigureVchService,
               private renderer: Renderer,
               private el: ElementRef) {
-    super();
   }
 
   ngOnInit() {
     this.vchId = this.activatedRoute.snapshot.url[0].path;
     this.vchInfo = this.configureVchService.getVchInfo(this.vchId)
-      .map(this.mapApiDatatoUiData)
+      .map(processPayloadFromApiToUi)
       .do(() => this.showCli = true);
 
     this.resizeToParentFrame();
@@ -120,24 +124,28 @@ export class ConfigureVchModalComponent extends ConfigureBase implements OnInit,
    */
   onSave() {
     if (this.currentTab) {
+      this.errorFlag = false;
       this.loading = true;
       this.currentTab.onCommit()
+        .switchMap((payload: VchUi) => {
+          const apiPayload = processPayloadFromUiToApi(payload);
+          console.log('patch api not implemented - uiPayload: ', payload);
+          console.log('patch api not implemented - ApiPayload: ', apiPayload);
+          return this.configureVchService.patchVch(this.vchId, apiPayload);
+        })
         .subscribe(
-          data => {
-            console.log('valid: ', data);
+          (payload: VchApi) => {
             this.errorFlag = false;
             this.loading = false;
+            this.onCancel();
           },
-          errors => {
-            console.log('invalid: ', errors);
+          (error: HttpErrorResponse) => {
             this.loading = false;
             this.errorFlag = true;
-            this.errorMsgs = errors;
+            this.errorMsgs = Array.isArray(error) ? error : [error.message];
           }
         )
     }
-    const webPlatform = this.globalsService.getWebPlatform();
-    // webPlatform.closeDialog();
   }
 
   currentTabModelChanged(model: VchUiModelTypes) {

@@ -1,26 +1,26 @@
 import {getNumericValidatorsArray} from '../shared/utils/validators';
 
 export type CpuUnit = 'B' | 'MHz';
-export type MemoryUnit = 'MB';
+export type MemoryUnit = 'MiB';
 export type ImageSizeUnit = 'MB' | 'GB';
-export type ServerCertSizeUnit = 'bits'
+export type ServerCertSizeUnit = 'bit'
 export type SharesLevel = 'Low' | 'Normal' | 'High';
 export type FirewallPolicyType = 'Closed' | 'Outbound' | 'Peers' | 'Published' | 'Open';
 
 
 export interface VchApi {
-  version: string,
-  name: string,
+  version?: string,
+  name?: string,
   debug?: number,
   syslog_addr?: string,
-  compute: VchApiCompute,
-  network: VchApiNetwork,
-  storage: VchApiStorage,
-  auth: VchApiAuth,
-  endpoint: VchApiEndpoint,
-  registry: VchApiRegistry,
-  runtime: VchApiRuntime,
-  container: VchApiContainer
+  compute?: VchApiCompute,
+  network?: VchApiNetwork,
+  storage?: VchApiStorage,
+  auth?: VchApiAuth,
+  endpoint?: VchApiEndpoint,
+  registry?: VchApiRegistry,
+  container?: VchApiContainer
+  runtime?: VchApiRuntime,
 }
 
 // VCH General
@@ -50,7 +50,7 @@ export interface VchApiCompute {
       value: number
     },
     shares?: {
-      number: number,
+      number?: number,
       level: SharesLevel
     }
   },
@@ -64,12 +64,12 @@ export interface VchApiCompute {
       value: number
     },
     shares?: {
-      number: number,
+      number?: number,
       level: SharesLevel
     }
   },
   resource: {
-    id: string,
+    id?: string,
     name: string
   }
 }
@@ -91,47 +91,47 @@ export interface VchApiNetwork {
   bridge: {
     ip_range: string,
     port_group: {
-      id: string,
+      id?: string,
       name: string
     }
   },
-  client: {
+  client?: {
     port_group: {
-      id: string,
-      name: string
+      id?: string,
+      name?: string
     },
-    gateway: {
-      routing_destinations: string[],
+    gateway?: {
+      routing_destinations?: string[],
       address: string
     },
-    nameservers: string[],
-    static: string
+    nameservers?: string[],
+    static?: string
   },
-  management: {
+  management?: {
     port_group: {
-      id: string,
-      name: string
+      id?: string,
+      name?: string
     },
-    gateway: {
-      routing_destinations: string[],
+    gateway?: {
+      routing_destinations?: string[],
       address: string
     },
-    nameservers: string[],
-    static: string
+    nameservers?: string[],
+    static?: string
   },
   public: {
     port_group: {
-      id: string,
+      id?: string,
       name: string
     },
-    gateway: {
-      routing_destinations: string[],
+    gateway?: {
+      routing_destinations?: string[],
       address: string
     },
-    nameservers: string[],
-    static: string
+    nameservers?: string[],
+    static?: string
   },
-  container: [
+  container?: [
     {
       alias: string,
       firewall: FirewallPolicyType,
@@ -152,7 +152,7 @@ export interface VchApiNetwork {
 // VCH Storage
 export interface VchApiStorage {
   image_stores: string[],
-  volume_stores: [
+  volume_stores?: [
     {
       datastore: string,
       label: string
@@ -166,75 +166,75 @@ export interface VchApiStorage {
 
 // VCH Auth
 export interface VchApiAuth {
-  no_tls: true,
+  no_tls?: true,
   client: {
-    no_tls_verify: true,
-    certificate_authorities: [
+    no_tls_verify?: true,
+    certificate_authorities?: [
       {
         pem: string
       }
       ]
   },
   server: {
-    certificate: {
+    certificate?: {
       pem: string
     },
-    private_key: {
+    private_key?: {
       pem: string
     },
-    generate: {
+    generate?: {
       size: {
         units: ServerCertSizeUnit,
         value: number
       },
-      organization: string[],
-      cname: string
+      organization?: string[],
+      cname?: string
     }
   }
 }
 
 // VCH Endpoint
 export interface VchApiEndpoint {
-  memory: {
+  memory?: {
     units: MemoryUnit,
     value: number
   },
-  cpu: {
+  cpu?: {
     sockets: number
   },
-  operations_credentials: {
+  operations_credentials?: {
     password: string,
     user: string,
-    grant_permissions: true
+    grant_permissions?: true
   }
 }
 
 // VCH Registry
 export interface VchApiRegistry {
-  insecure: string[],
-  whitelist: string[],
-  certificate_authorities: [
+  insecure?: string[],
+  whitelist?: string[],
+  certificate_authorities?: [
     {
       pem: string
     }
     ],
-  image_fetch_proxy: {
-    http: string,
-    https: string
+  image_fetch_proxy?: {
+    http?: string,
+    https?: string
   }
 }
 
 // VCH Runtime
 export interface VchApiRuntime {
-  power_state: string,
-  upgrade_status: string,
-  admin_portal: string,
-  docker_host: string
+  power_state?: string,
+  upgrade_status?: string,
+  admin_portal?: string,
+  docker_host?: string
 }
 
 // VCH Container
 export interface VchApiContainer {
-  name_convention: string
+  name_convention?: string
 }
 
 

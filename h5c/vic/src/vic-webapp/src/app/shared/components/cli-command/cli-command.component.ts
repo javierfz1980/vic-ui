@@ -29,6 +29,9 @@ export class CliCommandComponent implements OnInit {
   public form: FormGroup;
   public copySucceeded: boolean = null;
   public cliCommand: Observable<string>;
+  private skippedParams = [
+    'computeResource'
+  ];
 
   constructor(private formBuilder: FormBuilder) {
     this.form = this.formBuilder.group({targetOS: null, cliCommand: null});
@@ -130,6 +133,7 @@ export class CliCommandComponent implements OnInit {
             }
           }
           results.push(`--${newKey} ${this.valueToString(value)}`);
+
         } else {
           // repeat adding multiple, optional fields with the same key
           for (const i in value) {
@@ -143,6 +147,7 @@ export class CliCommandComponent implements OnInit {
                 continue;
               }
               results.push(`--${newKey} ${rawValue}`);
+
             } else if (typeof rawValue === 'object') {
               if (isUploadableFileObject(rawValue)) {
                 results.push(`--${newKey} ${rawValue.name}`);

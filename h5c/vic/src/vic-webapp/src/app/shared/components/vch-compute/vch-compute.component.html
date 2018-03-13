@@ -79,7 +79,12 @@
         </div>
         <ng-container *ngIf="model.computeResource; else resourceTree">
           <div class="col-xs-6">
-            <label>{{model.computeResource}}</label>
+            <label *ngIf="selectedComputeResourcePath | async as path; else loadingComputeResourcePath">
+              {{path}}
+            </label>
+            <ng-template #loadingComputeResourcePath>
+              <div class="spinner spinner-sm"></div>
+            </ng-template>
           </div>
         </ng-container>
         <ng-template #resourceTree>

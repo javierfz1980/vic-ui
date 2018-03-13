@@ -28,6 +28,7 @@ import { StorageCapacityComponent } from './storage-capacity/storage-capacity.co
 import { SummaryComponent } from './summary/summary.component';
 import { RegistryAccessComponent } from './registry-access/registry-access.component';
 import { SharedModule } from '../shared/shared.module';
+import {ConfigureVchService} from '../configure/configure-vch.service';
 
 const routes: Routes = [
   { path: '', component: CreateVchWizardComponent },
@@ -57,7 +58,8 @@ const declarations = [
     NetworksComponent
   ],
   providers: [
-    CreateVchWizardService
+    CreateVchWizardService,
+    ConfigureVchService
   ],
   exports: [
     ...declarations
