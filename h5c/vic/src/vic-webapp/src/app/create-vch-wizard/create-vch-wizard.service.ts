@@ -139,10 +139,20 @@ export class CreateVchWizardService {
                                     `&objRef=${v.objRef}` +
                                     '&treeId=DcHostsAndClustersTree')
                                     .catch(e => Observable.throw(e))
-                                    .map(response => {
-                                      const rsp = response.json();
-                                      rsp.forEach((cluster, i) => rsp[i]['datacenterObjRef'] = v.objRef);
-                                      return rsp;
+                                    .switchMap(response => {
+                                       const computeResources: ComputeResource[] = response.json();
+                                       return Observable.from(computeResources)
+                                         .mergeMap((cr: ComputeResource) => {
+                                           cr['datacenterObjRef'] = v.objRef;
+                                           return this.http.get(`/ui/data/properties/${cr.objRef}?properties=name`)
+                                             .catch(e => Observable.throw(e))
+                                             .map(resourceName => {
+                                               const rsp = resourceName.json();
+                                               cr['realName'] = rsp['name'];
+                                               return cr;
+                                             });
+                                         })
+                                         .toArray();
                                     })
                                     .catch(e => Observable.throw(e));
                      });
