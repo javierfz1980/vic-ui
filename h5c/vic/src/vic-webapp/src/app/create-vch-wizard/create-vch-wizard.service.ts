@@ -128,41 +128,55 @@ export class CreateVchWizardService {
         });
     }
 
+  /**
+   * Queries the H5 Client to obtain the real name of the Compute Resource and returns
+   * the ComputeResource with a new property 'realName'.
+   */
+  private getComputeResourceWithRealName(crObjectRef: string): Observable<ComputeResource> {
+    return this.http.get(`/ui/data/properties/${crObjectRef}?properties=name`)
+      .catch(e => Observable.throw(e))
+      .map(response => response.json());
+  }
+
+  /**
+   * Queries the H5 Client for Clusters and stand alone Hosts from the desired DC
+   */
+  private getDcClustersAndStandAloneHosts(dcObjRef: string): Observable<ComputeResource[]> {
+    return this.http.get('/ui/tree/children?nodeTypeId=RefAsRoot' +
+      `&objRef=${dcObjRef}` +
+      '&treeId=DcHostsAndClustersTree')
+      .catch(e => Observable.throw(e))
+      .map(response => response.json());
+  }
+
     /**
      * Queries the H5 Client for clusters
      */
     getClustersList(serverGuid: string): Observable<any> {
-        return this.getDatacenter(serverGuid)
-                   .switchMap(dc => {
-                     const obsArr = dc.map(v => {
-                         return this.http.get('/ui/tree/children?nodeTypeId=RefAsRoot' +
-                                    `&objRef=${v.objRef}` +
-                                    '&treeId=DcHostsAndClustersTree')
-                                    .catch(e => Observable.throw(e))
-                                    .switchMap(response => {
-                                       const computeResources: ComputeResource[] = response.json();
-                                       return Observable.from(computeResources)
-                                         .mergeMap((cr: ComputeResource) => {
-                                           cr['datacenterObjRef'] = v.objRef;
-                                           return this.http.get(`/ui/data/properties/${cr.objRef}?properties=name`)
-                                             .catch(e => Observable.throw(e))
-                                             .map(resourceName => {
-                                               const rsp = resourceName.json();
-                                               cr['realName'] = rsp['name'];
-                                               return cr;
-                                             });
-                                         })
-                                         .toArray();
-                                    })
-                                    .catch(e => Observable.throw(e));
-                     });
-                     return Observable.zip.apply(null, obsArr);
-                    })
-                    .map((clustersArr: any[]) => {
-                      let flattened = [];
-                      clustersArr.forEach(arr => flattened = flattened.concat(arr));
-                      return flattened;
-                    });
+      return this.getDatacenter(serverGuid)
+        .switchMap(dc => {
+          const obsArr = dc.map(v => {
+            return this.getDcClustersAndStandAloneHosts(v.objRef)
+              .switchMap((computeResources: ComputeResource[]) => {
+                return Observable.from(computeResources)
+                  .mergeMap((cr: ComputeResource) => {
+                    cr['datacenterObjRef'] = v.objRef;
+                    return this.getComputeResourceWithRealName(cr.objRef)
+                      .map(resourceName => {
+                        cr['realName'] = resourceName['name'];
+                        return cr;
+                      });
+                  })
+                  .toArray();
+              })
+          });
+          return Observable.zip.apply(null, obsArr);
+        })
+        .map((clustersArr: any[]) => {
+          let flattened = [];
+          clustersArr.forEach(arr => flattened = flattened.concat(arr));
+          return flattened;
+        });
     }
 
     /**
