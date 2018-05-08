@@ -35,6 +35,10 @@ import { RegistryAccessComponent } from './registry-access/registry-access.compo
 import {VchGeneralComponent} from '../shared/components/vch-general/vch-general.component';
 import {VchComputeComponent} from '../shared/components/vch-compute/vch-compute.component';
 import {ComputeResourceTreenodeComponent} from '../shared/components/vch-compute/compute-resource-treenode.component';
+import {CapitalizePipe} from '../shared/pipes/capitalize.pipe';
+import {CliCommandComponent} from '../shared/components/cli-command/cli-command.component';
+import {ConfigureVchService} from '../configure/configure-vch.service';
+import {HttpClientModule} from '@angular/common/http';
 
 describe('CreateVchWizardComponent', () => {
   jasmine.DEFAULT_TIMEOUT_INTERVAL = JASMINE_TIMEOUT;
@@ -47,6 +51,7 @@ describe('CreateVchWizardComponent', () => {
       imports: [
         FormsModule,
         HttpModule,
+        HttpClientModule,
         ReactiveFormsModule,
         ClarityModule,
         BrowserAnimationsModule
@@ -84,7 +89,8 @@ describe('CreateVchWizardComponent', () => {
           provide: RefreshService, useValue: {
             refresh: () => {}
           }
-        }
+        },
+        ConfigureVchService
       ],
       declarations: [
         CreateVchWizardComponent,
@@ -96,7 +102,9 @@ describe('CreateVchWizardComponent', () => {
         SecurityComponent,
         RegistryAccessComponent,
         OperationsUserComponent,
-        SummaryComponent
+        SummaryComponent,
+        CapitalizePipe,
+        CliCommandComponent
       ]
     })
       .compileComponents();
