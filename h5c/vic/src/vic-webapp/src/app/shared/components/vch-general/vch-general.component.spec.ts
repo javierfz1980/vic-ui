@@ -68,6 +68,7 @@ describe('VchCreationWizardGeneralComponent', () => {
 
   beforeEach(() => {
     fixture = TestBed.createComponent(VchGeneralComponent);
+    fixture.detectChanges();
     component = fixture.componentInstance;
     component.onPageLoad();
     service = fixture.debugElement.injector.get(CreateVchWizardService);
