@@ -92,7 +92,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=summary-view</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=summary-view</url>
                     </root>
                 </object>
             </componentClass>
@@ -114,7 +114,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=portlet</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=portlet</url>
                     </root>
                 </object>
             </componentClass>
@@ -144,7 +144,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=portlet</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=portlet</url>
                     </root>
                 </object>
             </componentClass>
@@ -176,7 +176,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=vch-view</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=vch-view</url>
                     </root>
                 </object>
             </componentClass>
@@ -191,7 +191,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=container-view</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=container-view</url>
                     </root>
                 </object>
             </componentClass>
@@ -210,7 +210,7 @@
                   <className>com.vmware.vsphere.client.htmlbridge.HtmlActionDelegate</className>
                   <object><root>
                       <!-- execute the action on client-side (html view in a modal dialog) -->
-                      <actionUrl>/vsphere-client/vic/resources/dist/index.html?view=ui-actions</actionUrl>
+                      <actionUrl>/vsphere-client/vic/resources/build-dev/index.html?view=ui-actions</actionUrl>
                       <dialogTitle>Loading...</dialogTitle>
                   </root></object>
                </delegate>
@@ -224,7 +224,7 @@
                   <className>com.vmware.vsphere.client.htmlbridge.HtmlActionDelegate</className>
                   <object><root>
                       <!-- execute the action on client-side (html view in a modal dialog) -->
-                      <actionUrl>/vsphere-client/vic/resources/dist/index.html?view=ui-actions</actionUrl>
+                      <actionUrl>/vsphere-client/vic/resources/build-dev/index.html?view=ui-actions</actionUrl>
                       <dialogTitle>Loading...</dialogTitle>
                   </root></object>
                </delegate>
@@ -324,7 +324,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=configure-vch-view-general</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=configure-vch-view-general</url>
                     </root>
                 </object>
             </componentClass>
@@ -340,7 +340,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=configure-vch-view-compute</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=configure-vch-view-compute</url>
                     </root>
                 </object>
             </componentClass>
@@ -356,7 +356,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=configure-vch-view-storage</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=configure-vch-view-storage</url>
                     </root>
                 </object>
             </componentClass>
@@ -372,7 +372,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=configure-vch-view-network</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=configure-vch-view-network</url>
                     </root>
                 </object>
             </componentClass>
@@ -388,7 +388,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=configure-vch-view-security</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=configure-vch-view-security</url>
                     </root>
                 </object>
             </componentClass>
@@ -404,7 +404,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=configure-vch-view-registry</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=configure-vch-view-registry</url>
                     </root>
                 </object>
             </componentClass>
@@ -420,7 +420,7 @@
             <componentClass className="com.vmware.vsphere.client.htmlbridge.HtmlView">
                 <object>
                     <root>
-                        <url>/vsphere-client/vic/resources/dist/index.html?view=configure-vch-view-operations</url>
+                        <url>/vsphere-client/vic/resources/build-dev/index.html?view=configure-vch-view-operations</url>
                     </root>
                 </object>
             </componentClass>
