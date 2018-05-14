@@ -5,6 +5,7 @@ import {
 } from '../../shared/constants/configure-vch-modal';
 import {VchUiModelKeys} from '../../interfaces/vch';
 import {GlobalsService} from '../../shared';
+import {CONFIGURE_VCH_MODAL_STORAGE_URL} from '../../shared/constants';
 
 @Component({
   selector: 'vic-configure-vch-view-container',
@@ -31,6 +32,9 @@ export class ConfigureVchViewContainerComponent {
         break;
       case 'compute':
         path = CONFIGURE_VCH_MODAL_COMPUTE_URL;
+        break;
+      case 'storage':
+        path = CONFIGURE_VCH_MODAL_STORAGE_URL;
         break;
     }
     if (path) {
