@@ -32,6 +32,7 @@ export class SummaryComponent {
    * On WizardPage load event, start listening for events on inputs
    */
   onPageLoad(): void {
+    console.log('summary:', this.payload);
     // refresh cli value based on any changes made to the previous pages
     this.cliPayload.next(this.payload);
   }

@@ -173,7 +173,7 @@ export class StorageCapacityComponent implements OnInit {
         vol['volFileFolder'] = '/' + vol['volFileFolder'];
       }
     });
-
+    console.log('storageCapacity:', results);
     return Observable.of({ storageCapacity: results });
   }
 }

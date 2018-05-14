@@ -37,7 +37,6 @@ const routes: Routes = [
 
 const declarations = [
   CreateVchWizardComponent,
-  StorageCapacityComponent,
   SecurityComponent,
   RegistryAccessComponent,
   OperationsUserComponent,
