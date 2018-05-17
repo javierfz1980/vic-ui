@@ -2,6 +2,8 @@
  * Transform wizard payload before sending it to vic-machine-service API
  */
 import {
+  ContainerNetworkApi,
+  VchContainerNetworkUi, FirewallPolicyType,
   VchApi, VchApiAuth, VchApiCompute, VchApiContainer, VchApiEndpoint,
   VchApiNetwork, VchApiRegistry,
   VchApiStorage, VchUi,
@@ -198,34 +200,34 @@ export function processPayloadFromUiToApi(payload): VchApi {
     }
 
     if (payload.networks.containerNetworks && payload.networks.containerNetworks.length) {
-      vchNetwork.container = payload.networks.containerNetworks.map(net => {
-        const network = {
+      vchNetwork.container = payload.networks.containerNetworks.map((containerUi: VchContainerNetworkUi) => {
+        const containerApi: ContainerNetworkApi = {
           port_group: {
-            name: net.containerNetwork
+            name: containerUi.containerNetwork
           }
         };
 
-        if (net.containerNetworkDns) {
-          network['nameservers'] = [net.containerNetworkDns];
+        if (containerUi.containerNetworkDns) {
+          containerApi.nameservers = [containerUi.containerNetworkDns];
         }
 
-        if (net.containerNetworkLabel) {
-          network['alias'] = net.containerNetworkLabel;
+        if (containerUi.containerNetworkLabel) {
+          containerApi.alias = containerUi.containerNetworkLabel;
         }
 
-        if (net.containerNetworkFirewall) {
-          network['firewall'] = net.containerNetworkFirewall;
+        if (containerUi.containerNetworkFirewall) {
+          containerApi.firewall = containerUi.containerNetworkFirewall;
         }
 
-        if (net.containerNetworkIpRange) {
-          network['ip_ranges'] = [net.containerNetworkIpRange];
+        if (containerUi.containerNetworkIpRange) {
+          containerApi.ip_ranges = [containerUi.containerNetworkIpRange];
 
-          network['gateway'] = {
-            address: net.containerNetworkGateway
+          containerApi.gateway = {
+            address: containerUi.containerNetworkGateway
           };
         }
 
-        return network;
+        return containerApi;
       });
     }
 
@@ -384,6 +386,7 @@ export function processPayloadFromUiToApi(payload): VchApi {
 
 
 export function processPayloadFromApiToUi (vch: VchApi): VchUi {
+  console.log('vch api:', vch);
   const uiModel: VchUi = {
     general: {
       name: vch.name,
@@ -414,10 +417,47 @@ export function processPayloadFromApiToUi (vch: VchApi): VchUi {
           volFileFolder: getDSNameAndFolder(vol.datastore).folderPath
         })
       }),
-
+    },
+    network: {
+      bridgeNetwork: vch.network.bridge.port_group.id,
+      bridgeNetworkRange: vch.network.bridge.ip_range, // '172.16.0.0/12',
+      publicNetwork: vch.network.public.port_group.id,
+      publicNetworkIp: vch.network.public.gateway ? vch.network.public.gateway.routing_destinations.join(',') : '',
+      publicNetworkGateway: vch.network.public.gateway ? vch.network.public.gateway.address : '',
+      publicNetworkType: vch.network.public.nameservers && vch.network.public.nameservers.length > 0 ? 'static' : 'dhcp',
+      clientNetwork: vch.network.client.port_group.id,
+      clientNetworkIp: vch.network.client.gateway ? vch.network.client.gateway.routing_destinations.join(',') : '',
+      clientNetworkType: vch.network.client.nameservers && vch.network.client.nameservers.length > 0 ? 'static' : 'dhcp',
+      clientNetworkGateway: vch.network.client.gateway ? vch.network.client.gateway.address : '',
+      clientNetworkRouting: vch.network.client.nameservers.join(','),
+      managementNetwork: vch.network.management.port_group.id,
+      managementNetworkIp: vch.network.management.gateway ? vch.network.management.gateway.routing_destinations.join(',') : '',
+      managementNetworkType: vch.network.management.nameservers && vch.network.management.nameservers.length > 0 ? 'static' : 'dhcp',
+      managementNetworkGateway: vch.network.management.gateway ? vch.network.management.gateway.address : '',
+      managementNetworkRouting: vch.network.management.nameservers.join(','),
+      containerNetworks: vchNetworkContainerApiToUi(vch.network.container),
+      httpProxy: vch.network.httpProxy ? vch.network.httpProxy.split(':')[0] : '',
+      httpProxyPort: vch.network.httpProxy ? vch.network.httpProxy.split(':')[1] : '',
+      httpsProxy: vch.network.httpsProxy ? vch.network.httpsProxy.split(':')[0] : '',
+      httpsProxyPort: vch.network.httpsProxy ? vch.network.httpsProxy.split(':')[1] : '',
+      dnsServer: vch.network.public.nameservers ? vch.network.public.nameservers.join(',') : ''
     }
   };
   return uiModel;
+}
+
+function vchNetworkContainerApiToUi(apiContainers: ContainerNetworkApi[]): VchContainerNetworkUi[] {
+  return apiContainers.map( container => {
+    return ({
+      containerNetwork: container.port_group.id,
+      containerNetworkDns: container.nameservers.join(','),
+      containerNetworkFirewall: container.firewall,
+      containerNetworkGateway: container.gateway ? container.gateway.address : '',
+      containerNetworkIpRange: container.ip_ranges ? container.ip_ranges.join(',') : '',
+      containerNetworkLabel: container.alias,
+      containerNetworkType: container.nameservers && container.nameservers.length > 0 ? 'dhcp' : 'static',
+    })
+  })
 }
 
 function getDSNameAndFolder(fullPath: string): {name: string; folderPath: string} {

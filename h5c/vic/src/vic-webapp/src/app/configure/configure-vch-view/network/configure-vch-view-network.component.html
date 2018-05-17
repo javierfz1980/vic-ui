@@ -1,1 +1,14 @@
-Network
+<ng-container *ngIf="vchInfo | async as vchUIModel; else loadingContent">
+  <vic-configure-vch-view-container [title]="'Network'"
+                                    [vchUiModelKey]="'network'"
+                                    [vchId]="vchId">
+    <vic-vch-network [readOnly]="true"
+                     [model]="vchUIModel.network">
+    </vic-vch-network>
+  </vic-configure-vch-view-container>
+</ng-container>
+<ng-template #loadingContent>
+        <span class="spinner spinner-md">
+          Loading...
+        </span>
+</ng-template>

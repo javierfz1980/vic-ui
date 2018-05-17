@@ -34,14 +34,14 @@ export class VchGeneralComponent extends VchComponentBase implements OnInit {
   constructor(protected formBuilder: FormBuilder,
               protected createWzService: CreateVchWizardService) {
     super(formBuilder, createWzService);
-    this.setFormValues(this.initialModel);
+    this.updateCurrentForm(this.initialModel);
   }
 
   ngOnInit() {
     super.ngOnInit();
   }
 
-  protected setFormValues(model: VchUiGeneral) {
+  protected updateCurrentForm(model: VchUiGeneral) {
     const [,
       containerNameConventionPrefix = '',
       containerNameConvention = '{name}',
@@ -67,10 +67,6 @@ export class VchGeneralComponent extends VchComponentBase implements OnInit {
       syslogPort: [syslogPort, [Validators.maxLength(5),
         Validators.pattern(numberPattern)]]
     });
-
-    if (this.model) {
-      this.updateCurrentModel();
-    }
   }
 
   protected updateCurrentModel() {
@@ -96,8 +92,6 @@ export class VchGeneralComponent extends VchComponentBase implements OnInit {
       if (syslogHost && syslogPort) {
         this.model.syslogAddress = `${syslogTransport}://${syslogHost}:${syslogPort}`;
       }
-
-      this.emitCurrentModel();
     }
   }
 

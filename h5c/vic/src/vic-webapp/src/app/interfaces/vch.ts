@@ -131,22 +131,59 @@ export interface VchApiNetwork {
     nameservers?: string[],
     static?: string
   },
-  container?: [
-    {
-      alias: string,
-      firewall: FirewallPolicyType,
-      nameservers: string[],
-      port_group: {
-        id: string,
-        name: string
-      },
-      gateway: {
-        routing_destinations: string[],
-        address: string
-      },
-      ip_ranges: string[]
-    }
-    ]
+  container?: ContainerNetworkApi[],
+  httpProxy?: string,
+  httpsProxy?: string
+}
+
+export interface ContainerNetworkApi {
+  alias?: string,
+  firewall?: FirewallPolicyType,
+  nameservers?: string[],
+  port_group: {
+    id?: string,
+    name: string
+  },
+  gateway?: {
+    routing_destinations?: string[],
+    address: string
+  },
+  ip_ranges?: string[]
+}
+
+export interface VchUiNetwork {
+  clientNetwork?: string;
+  clientNetworkGateway?: string;
+  clientNetworkIp?: string;
+  clientNetworkRouting?: string;
+  clientNetworkType: string;
+  publicNetwork: string;
+  publicNetworkGateway?: string;
+  publicNetworkIp?: string;
+  publicNetworkType: string;
+  bridgeNetwork: string;
+  bridgeNetworkRange: string;
+  managementNetwork?: string;
+  managementNetworkGateway?: string;
+  managementNetworkIp?: string;
+  managementNetworkRouting?: string;
+  managementNetworkType: string;
+  containerNetworks?: VchContainerNetworkUi[];
+  dnsServer?: string;
+  httpProxy?: string;
+  httpProxyPort?: string;
+  httpsProxy?: string;
+  httpsProxyPort?: string;
+}
+
+export interface VchContainerNetworkUi {
+  containerNetwork: string;
+  containerNetworkDns: string;
+  containerNetworkFirewall: FirewallPolicyType;
+  containerNetworkGateway?: string;
+  containerNetworkIpRange?: string;
+  containerNetworkLabel: string;
+  containerNetworkType: string;
 }
 
 // VCH Storage
@@ -256,7 +293,8 @@ export interface VchUi {
   general?: VchUiGeneral;
   computeCapacity?: VchUiCompute;
   storageCapacity?: VchUiStorage;
+  network?: VchUiNetwork;
 }
 
-export type VchUiModelTypes = VchUiGeneral | VchUiCompute | VchUiStorage;
-export type VchUiModelKeys = 'general' | 'compute' | 'storage';
+export type VchUiModelTypes = VchUiGeneral | VchUiCompute | VchUiStorage | VchUiNetwork;
+export type VchUiModelKeys = 'general' | 'compute' | 'storage' | 'network';

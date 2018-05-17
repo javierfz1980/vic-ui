@@ -335,7 +335,7 @@ export class NetworksComponent implements OnInit {
     } else {
       results['containerNetworks'] = [];
     }
-
+    console.log('networks ui:', { networks: results });
     return Observable.of({ networks: results });
   }
 

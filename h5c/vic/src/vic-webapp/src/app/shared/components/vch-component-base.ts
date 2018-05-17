@@ -26,41 +26,86 @@ export abstract class VchComponentBase implements OnInit, OnDestroy {
               protected configureService?: ConfigureVchService) {
   }
 
+  /**
+   * If we are receiving an external model it means that we are on "configure" mode and we should update form and model. If not, we assume
+   * that our model is our inintialModel
+   */
   ngOnInit() {
     if (this.model) {
       this.isConfigure = true;
-      this.setFormValues(this.model);
-      this.onPageLoad();
+      this.updateFormAndModel(this.model);
+      if (!this.readOnly) {
+        this.onPageLoad();
+      }
     } else {
       this.model = this.initialModel;
     }
 
     this.formValueChangesSubscription = this.form
       .valueChanges
-      .subscribe(value => this.updateCurrentModel());
+      .subscribe(value => {
+        this.updateCurrentModel();
+        this.emitCurrentModel();
+      });
   }
 
-  protected abstract setFormValues(model: VchUiModelTypes);
+  /**
+   * Updates the form values based on the received model and only if we have an external model (configure mode) we edit and emit
+   * the current model
+   */
+  protected updateFormAndModel(model: VchUiModelTypes) {
+    this.updateCurrentForm(model);
+    if (this.model) {
+      this.updateCurrentModel();
+      this.emitCurrentModel();
+    }
+  }
 
+  /**
+   * Updates the current form. This should be implemented on each componente based on component form/model logic
+   */
+  protected abstract updateCurrentForm(model: VchUiModelTypes);
+
+  /**
+   * Updates the current model. This should be implemented on each componente based on component form/model logic
+   */
   protected abstract updateCurrentModel();
 
+  /**
+   * Commits an observable of the current component model.
+   */
   abstract onCommit(): Observable<{[key: string]: VchUiModelTypes}>;
 
+  /**
+   * Emits the current model after any change in order to notify to any possible subscriptor
+   */
   emitCurrentModel() {
     this.modelChanged.emit(this.model);
   }
 
+  /**
+   * Returns true/false based on form validity
+   */
   isValid(): boolean {
     return this.form && this.form.valid;
   }
 
+  /**
+   * This should be implemented in order to be used by the creation wizzard component. Components can optionally override implementation
+   */
   onPageLoad() {}
 
+  /**
+   * Returns true/false if the desired control is valid or not
+   */
   isFormControlInvalid(controlName: string) {
     const control = this.form.get(controlName);
     return control.invalid && (control.dirty || control.touched);
   }
 
+  /**
+   * Deletes form value change subscription
+   */
   ngOnDestroy() {
     if (this.formValueChangesSubscription) {
       this.formValueChangesSubscription.unsubscribe();

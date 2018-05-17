@@ -15,6 +15,10 @@
 */
 
 import {Component} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import {ConfigureVchBase} from '../../configure-vch-base';
+import {GlobalsService} from '../../../shared/globals.service';
+import {ConfigureVchService} from '../../configure-vch.service';
 
 @Component({
   selector: 'vic-configure-vch-view-network',
@@ -22,6 +26,11 @@ import {Component} from '@angular/core';
   templateUrl: './configure-vch-view-network.component.html'
 })
 
-export class ConfigureVchViewNetworkComponent {
+export class ConfigureVchViewNetworkComponent extends ConfigureVchBase {
 
+  constructor(protected globalsService: GlobalsService,
+              protected configureVchService: ConfigureVchService,
+              protected activatedRoute: ActivatedRoute) {
+    super(globalsService, configureVchService, activatedRoute);
+  }
 }

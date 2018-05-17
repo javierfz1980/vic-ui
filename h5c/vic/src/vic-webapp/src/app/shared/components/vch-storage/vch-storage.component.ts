@@ -5,11 +5,9 @@ import {ConfigureVchService, SelectedComputeResourceInfo} from '../../../configu
 import {GlobalsService} from '../../globals.service';
 import {FormArray, FormBuilder, Validators} from '@angular/forms';
 import {Observable} from 'rxjs/Observable';
-import {ImageSizeUnit, VchUiStorage, VchUiStorageVolumeStore} from '../../../interfaces/vch';
+import {VchUiStorage, VchUiStorageVolumeStore} from '../../../interfaces/vch';
 import {numberPattern, supportedCharsPattern} from '../../utils/validators';
 import {noBlankSpaces} from '../../utils';
-import {ServerInfo} from '../../vSphereClientSdkTypes';
-import {ComputeResource} from '../../../interfaces/compute.resource';
 
 @Component({
   selector: 'vic-vch-storage',
@@ -24,7 +22,7 @@ export class VchStorageComponent extends VchComponentBase implements OnInit {
     }
   }
 
-  model: VchUiStorage;
+  @Input() model: VchUiStorage;
   initialModel: VchUiStorage = {
     baseImageSize: '8',
     baseImageSizeUnit: 'GiB',
@@ -47,14 +45,14 @@ export class VchStorageComponent extends VchComponentBase implements OnInit {
     protected configureService: ConfigureVchService
   ) {
     super(formBuilder, createWzService, globalsService, configureService);
-    this.setFormValues(this.initialModel);
+    this.updateCurrentForm(this.initialModel);
   }
 
   ngOnInit() {
     super.ngOnInit();
   }
 
-  protected setFormValues(model: VchUiStorage) {
+  protected updateCurrentForm(model: VchUiStorage) {
     this.form = this.formBuilder.group({
       imageStore: [model.imageStore, Validators.required],
       fileFolder: model.fileFolder,
@@ -71,10 +69,6 @@ export class VchStorageComponent extends VchComponentBase implements OnInit {
       volumeStore: this.formBuilder.array(model.volumeStore.length > 0 ?
         this.getModelVolumesEntries(model.volumeStore) : [this.createNewVolumeDatastoreEntry()])
     });
-
-    if (this.model) {
-      this.updateCurrentModel();
-    }
   }
 
   protected updateCurrentModel() {
@@ -99,8 +93,6 @@ export class VchStorageComponent extends VchComponentBase implements OnInit {
           vol.volFileFolder = '/' + vol.volFileFolder;
         }
       });
-
-      this.emitCurrentModel();
     }
   }
 
