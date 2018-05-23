@@ -196,7 +196,7 @@
             </clr-stack-block>
           </clr-stack-block>
           <!-- client network -->
-          <clr-stack-block *ngIf="payload?.networks?.hasOwnProperty('clientNetwork')">
+          <clr-stack-block *ngIf="payload?.networks && payload?.networks?.clientNetwork != ''">
             <clr-stack-label>Client network</clr-stack-label>
             <clr-stack-content>
               {{ payload.networks.clientNetwork }}, {{ payload.networks.clientNetworkIp || 'DHCP' }}
@@ -233,7 +233,7 @@
             </clr-stack-block>
           </clr-stack-block>
           <!-- management network -->
-          <clr-stack-block *ngIf="payload?.networks?.hasOwnProperty('managementNetwork')">
+          <clr-stack-block *ngIf="payload?.networks && payload?.networks?.managementNetwork != ''">
             <clr-stack-label>Management network</clr-stack-label>
             <clr-stack-content>
               {{ payload.networks.managementNetwork }}, {{ payload.networks.managementNetworkIp || 'DHCP' }}
