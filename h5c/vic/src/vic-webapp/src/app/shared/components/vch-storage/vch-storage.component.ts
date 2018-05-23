@@ -10,6 +10,7 @@ import {numberPattern, supportedCharsPattern} from '../../utils/validators';
 import {noBlankSpaces} from '../../utils';
 import {ServerInfo} from '../../vSphereClientSdkTypes';
 import {ComputeResource} from '../../../interfaces/compute.resource';
+import {I18nService} from '../../i18n.service';
 
 @Component({
   selector: 'vic-vch-storage',
@@ -44,7 +45,8 @@ export class VchStorageComponent extends VchComponentBase implements OnInit {
     protected formBuilder: FormBuilder,
     protected createWzService: CreateVchWizardService,
     protected globalsService: GlobalsService,
-    protected configureService: ConfigureVchService
+    protected configureService: ConfigureVchService,
+    public i18n: I18nService
   ) {
     super(formBuilder, createWzService, globalsService, configureService);
     this.setFormValues(this.initialModel);
