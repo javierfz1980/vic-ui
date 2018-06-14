@@ -53,3 +53,10 @@
 .affinity-alerts .alert-item {
   margin-bottom: 0px;
 }
+
+.spinner-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

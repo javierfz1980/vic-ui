@@ -21,4 +21,9 @@ export interface ComputeResource {
   aliases: string[];
   isEmpty: boolean;
   realName?: string;
+  parentResource?: ComputeResource;
+  hasChildResources?: boolean;
+  childrens?: ComputeResource[];
+  datacenter: ComputeResource;
+  resourcePath?: string;
 }
