@@ -224,6 +224,11 @@ export class CreateVchWizardComponent implements OnInit {
    */
   processPayload(payload) {
 
+    // we should add the "host" keyword after the DC in the current path
+    const arrayPath = payload.computeCapacity.computeResource.split('/');
+    arrayPath.splice(1, 0, 'host');
+    const computeResourceFixedPath: string = arrayPath.join('/');
+
     const processedPayload = {
       'name': payload.general.name,
       'compute': {
@@ -241,7 +246,7 @@ export class CreateVchWizardComponent implements OnInit {
           }
         },
         'resource': {
-          'name': payload.computeCapacity.computeResource
+          'name': computeResourceFixedPath
         }
       },
       'storage': {

@@ -25,6 +25,7 @@ import {
   GET_CLONE_TICKET_URL,
   MEMORY_MIN_LIMIT_MB,
   VIC_APPLIANCES_LOOKUP_URL,
+  VIC_APPLIANCE_PORT, DC_FOLDER_TYPE, COMP_RES_FOLDER_TYPE
 } from '../shared/constants';
 import { Http, URLSearchParams } from '@angular/http';
 
@@ -171,6 +172,44 @@ export class CreateVchWizardService {
   }
 
     /**
+     * Retrieves a recursive Compute Resources tree list.
+     */
+    getResourcesTree(obj: ComputeResource, nodeTypeId: string = 'RefAsRoot'): Observable<ComputeResource[]> {
+      const url: string = `/ui/tree/children?nodeTypeId=${nodeTypeId}&objRef=${obj.objRef}&treeId=DcHostsAndClustersTree`;
+      return this.http.get(url)
+        .catch(e => Observable.throw(e))
+        .map(response => response.json())
+        .switchMap((resources: ComputeResource[]) => {
+          return Observable.from(resources)
+            .mergeMap((cr: ComputeResource) => {
+              return Observable.zip(
+                  this.getResourcesTree(cr, cr.nodeTypeId),
+                  this.getComputeResourceRealName(cr.objRef),
+                  this.getDatacenterForResource(cr.objRef)
+                )
+                .map(data => {
+                  // TODO: https://github.com/vmware/vic/pull/8048
+                  // We should change the property nodeTypeId 'StandaloneHostResPool' on VCH's Pool Resources to something like
+                  // 'VCH-StandaloneHostResPool' in order to let the visible in the tree node but to filter them in the selectResource()
+                  // method on compute-resource-treenode.component.ts
+                  // We should be able to do this once the API to fetch the list of  VCH's  Pool Resources is ready.
+                  //
+                  const childsData: ComputeResource[] = data[0];
+                  const crRealName: string = data[1]['name'];
+                  const dcObjRef: string = data[2].id;
+                  cr.parentResource = obj;
+                  cr.hasChildResources = childsData.length > 0 ? true : false;
+                  cr.childrens = childsData;
+                  cr.realName = crRealName;
+                  cr.datacenter = this._datacenter.filter(dc => dc['objRef'] === dcObjRef)[0];
+                  return cr;
+                })
+            })
+        })
+        .toArray();
+    }
+
+    /**
      * Queries the H5 Client for clusters
      */
     getClustersList(serverGuid: string): Observable<any> {
@@ -226,10 +265,9 @@ export class CreateVchWizardService {
         });
     }
 
-    getResourceAllocationsInfo(resourceObjId: string, isCluster: boolean): Observable<any> {
-        if (isCluster) {
-            return this.http.get(`/ui/data/${resourceObjId}` +
-                '?model=com.vmware.vsphere.client.clusterui.model.ResourcePoolConfigData')
+    getResourceAllocationsInfo(resourceObjId: string, isClusterOrRP: boolean): Observable<any> {
+        if (isClusterOrRP) {
+            return this.http.get(`/ui/data/${resourceObjId}?model=com.vmware.vsphere.client.clusterui.model.ResourcePoolConfigData`)
                 .catch(e => Observable.throw(e))
                 .map(response => response.json())
                 .catch(e => Observable.throw(e))
@@ -248,8 +286,7 @@ export class CreateVchWizardService {
                 });
         } else {
             // host
-            return this.http.get(`/ui/data/properties/${resourceObjId}` +
-                '?properties=systemResources')
+            return this.http.get(`/ui/data/properties/${resourceObjId}?properties=systemResources`)
                 .catch(e => Observable.throw(e))
                 .map(response => response.json())
                 .catch(e => Observable.throw(e))

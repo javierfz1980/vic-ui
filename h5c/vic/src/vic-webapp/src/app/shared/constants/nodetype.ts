@@ -14,9 +14,6 @@
  limitations under the License.
 */
 
-export const DC_CLUSTER = 'DcCluster';
-export const DC_STANDALONE_HOST = 'DcStandaloneHost';
-
 export const COMPUTE_RESOURCE_NODE_TYPES = {
   dc: {
     dc: 'Datacenter'
@@ -42,3 +39,11 @@ export const COMPUTE_RESOURCE_NODE_TYPES = {
   }
 };
 
+export const DC_TYPE = 'Datacenter';
+export const DC_FOLDER_TYPE = 'DcCompResFolder';
+export const DC_CLUSTER_TYPE = 'DcCluster';
+export const DC_STANDALONE_HOST_TYPE = 'DcStandaloneHost';
+export const COMP_RES_FOLDER_TYPE = 'CompResFolderCompResFolder';
+export const STANDALONE_HOST_RES_POOL_TYPE = 'StandaloneHostResPool';
+export const CLUSTER_HOST_SYSTEM_TYPE = 'ClusterHostSystem';
+export const COMP_RES_FOLDER_CLUSTER_TYPE = 'CompResFolderCluster';

@@ -24,13 +24,19 @@ import {
   ElementRef,
   Renderer
 } from '@angular/core';
-import { DC_CLUSTER, DC_STANDALONE_HOST } from '../../shared/constants';
+import {
+  DC_CLUSTER_TYPE,
+  STANDALONE_HOST_RES_POOL_TYPE,
+  DC_STANDALONE_HOST_TYPE,
+  COMP_RES_FOLDER_CLUSTER_TYPE
+} from '../../shared/constants';
 
 import { CreateVchWizardService } from '../create-vch-wizard.service';
 import { Observable } from 'rxjs/Observable';
 import { GlobalsService } from '../../shared';
 import { ComputeResource } from '../../interfaces/compute.resource';
 import { ServerInfo } from '../../shared/vSphereClientSdkTypes';
+import {getMorIdFromObjRef} from '../../shared/utils/object-reference';
 
 /**
  * Component that renders a tree view of the inventory items on the selected Datacenter
@@ -44,17 +50,13 @@ import { ServerInfo } from '../../shared/vSphereClientSdkTypes';
 })
 export class ComputeResourceTreenodeComponent implements OnInit {
   public loading = true;
-  public clusters: ComputeResource[];
-  public clusterHostSystemsMap: {[clusterRef: string]: ComputeResource[]} = {};
-  public standaloneHosts: ComputeResource[];
   public selectedResourceObj: ComputeResource;
+  public tree: {childrens: ComputeResource[]};
+  public resourcesTree: Observable<{childrens: ComputeResource[]}>;
+  public datacenter: ComputeResource;
+  public currentPath: string[] = [];
   @Input() serverInfo: ServerInfo;
-  @Input() datacenter: ComputeResource;
-  @Output() resourceSelected: EventEmitter<{
-    obj: ComputeResource,
-    parentClusterObj?: ComputeResource,
-    datacenterObj: ComputeResource
-  }>;
+  @Output() resourceSelected: EventEmitter<ComputeResource>;
 
   @ViewChildren('btnEl') computeResourceBtns: QueryList<any>;
 
@@ -63,74 +65,67 @@ export class ComputeResourceTreenodeComponent implements OnInit {
     private renderer: Renderer,
     private globalsService: GlobalsService
   ) {
-    this.resourceSelected = new EventEmitter<{
-      obj: ComputeResource,
-      parentClusterObj?: ComputeResource,
-      datacenterObj: ComputeResource
-    }>();
+    this.resourceSelected = new EventEmitter<ComputeResource>();
   }
 
   ngOnInit() {
-    this.loadClusters(this.serverInfo);
+    this.resourcesTree = this.createWzService
+      .getDatacenter(this.serverInfo.serviceGuid)
+      .switchMap(dcs => {
+        const obsArr = dcs.map((dc: ComputeResource) => {
+          return this.createWzService
+            .getResourcesTree(dc)
+            .map((childrens: ComputeResource[]) => {
+              dc.childrens = childrens;
+              return dc;
+            })
+        });
+        return Observable.zip(...obsArr);
+      })
+      .map((resourcesTree: ComputeResource[]) => {
+        this.tree = {childrens: resourcesTree};
+        return {childrens: resourcesTree};
+      })
+
   }
 
-  loadClusters(serverInfo: ServerInfo) {
-    this.loading = true;
-    this.createWzService
-      .getClustersList(serverInfo.serviceGuid)
-      .subscribe(val => {
-        const filteredByDc = val.filter(v => v['datacenterObjRef'] === this.datacenter.objRef);
-        this.clusters = filteredByDc.filter(v => v.nodeTypeId === DC_CLUSTER);
-        this.standaloneHosts = filteredByDc.filter(v => v.nodeTypeId === DC_STANDALONE_HOST);
+  selectResource(event: Event, obj: ComputeResource) {
+    // TODO: https://github.com/vmware/vic/pull/8048
+    // we also should allow type 'StandaloneHostResPool' when the API to fetch the list of  VCH's  Pool Resources is ready.
+    // By now we are filtering Pool Resources.
+    //
+    if (obj.nodeTypeId === DC_CLUSTER_TYPE ||
+        obj.nodeTypeId === DC_STANDALONE_HOST_TYPE ||
+        obj.nodeTypeId === COMP_RES_FOLDER_CLUSTER_TYPE) {
 
-        if (!this.clusters.length) {
-          this.loading = false;
-        }
+      this.currentPath = [];
+      this.buildPathForResource(obj.objRef, this.tree.childrens);
+      obj.resourcePath = this.currentPath.reverse().join('/');
+      this.selectedResourceObj = obj;
+      this.datacenter = obj.datacenter;
+      this.resourceSelected.emit(obj);
 
-        // pointer to the current cluster object
-        // since we use concatMap the order in which we get results is guaranteed
-        let idx = 0;
-        this.createWzService.getAllClusterHostSystems(this.clusters)
-          .subscribe(clusterHostSystems => {
-            // if this is the last emission set loading var to false
-            if (idx === this.clusters.length - 1) {
-              this.loading = false;
-            }
-
-            // no host is attached to the cluster. at this point it does not make sense
-            // to display the cluster to the user, and trying to utilize the empty cluster
-            // would surely cause an error, so it makes sense to remove the cluster node from view
-            if (!clusterHostSystems.length) {
-              this.clusters[idx].isEmpty = true;
-              idx++;
-              return;
-            }
-
-            this.clusterHostSystemsMap[this.clusters[idx].objRef] = clusterHostSystems;
-            idx++;
-          });
-      });
-  }
-
-  selectResource(event: Event, obj: ComputeResource, clusterObj?: ComputeResource) {
-    this.selectedResourceObj = obj;
-    if (clusterObj) {
-      this.resourceSelected.emit({
-        obj: obj,
-        parentClusterObj: clusterObj,
-        datacenterObj: this.datacenter
-      });
-    } else {
-      this.resourceSelected.emit({ obj: obj, datacenterObj: this.datacenter });
+      this.unselectComputeResource();
+      this.renderer.setElementClass(event.target, 'active', true);
     }
-
-    this.unselectComputeResource();
-    this.renderer.setElementClass(event.target, 'active', true);
   }
 
   unselectComputeResource() {
     this.computeResourceBtns.forEach((elRef: ElementRef) => {
       this.renderer.setElementClass(elRef.nativeElement, 'active', false);
     })
+  }
+
+  private buildPathForResource(ref: string, tree: ComputeResource[]) {
+    let resource: ComputeResource = tree.find(child => child.objRef === ref);
+    if (!resource) {
+      tree.forEach(child => this.buildPathForResource(ref, child.childrens));
+    } else {
+      this.currentPath.push(resource.text);
+      if (resource.parentResource) {
+        this.buildPathForResource(resource.parentResource.objRef, this.tree.childrens);
+      }
+    }
+
   }
 }
