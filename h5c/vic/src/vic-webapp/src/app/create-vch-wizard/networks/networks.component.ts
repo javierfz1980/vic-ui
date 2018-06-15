@@ -139,6 +139,9 @@ export class NetworksComponent implements OnInit {
   }
 
   loadPortgroups(computeResourceObjName: string) {
+    console.log('loadPortgroups dc:', this.datacenter);
+    console.log('loadPortgroups resObjName:', this.resourceObjName);
+
     this.portgroupsLoading = true;
     this.createWzService.getDistributedPortGroups(this.datacenter, computeResourceObjName)
       .subscribe(v => {

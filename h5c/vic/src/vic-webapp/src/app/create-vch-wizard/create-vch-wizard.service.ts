@@ -403,6 +403,9 @@ export class CreateVchWizardService {
      * @param resourceObjName name of the selected compute resource
      */
     getDistributedPortGroups(dcObj: ComputeResource, resourceObjName?: string): Observable<any> {
+      console.log('getDistributedPortGroups dc:', dcObj);
+      console.log('getDistributedPortGroups resObjName:', resourceObjName);
+
       return this.getNetworkingTree(dcObj)
         .switchMap((networkingResources: ComputeResource[]) => {
           // gets the list of Dvs from the dc and or any existing network folder
