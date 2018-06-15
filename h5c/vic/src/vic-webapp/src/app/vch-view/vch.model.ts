@@ -41,6 +41,7 @@ export class VirtualContainerHost implements VirtualMachine {
   public resourceConfig: any;
 
   constructor(data: VchVmResponse) {
+    console.log('data VirtualContainerHost:', data);
     try {
       const splitVmId = data.id.split(FORWARD_SLASH);
       this._parentObj = data.resourcePool;
