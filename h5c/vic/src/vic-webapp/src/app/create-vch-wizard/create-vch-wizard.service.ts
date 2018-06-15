@@ -25,7 +25,7 @@ import {
   GET_CLONE_TICKET_URL,
   MEMORY_MIN_LIMIT_MB,
   VIC_APPLIANCES_LOOKUP_URL,
-  VIC_APPLIANCE_PORT, DC_FOLDER_TYPE, COMP_RES_FOLDER_TYPE
+  VIC_APPLIANCE_PORT, DC_FOLDER_TYPE, COMP_RES_FOLDER_TYPE, DC_CLUSTER_TYPE, COMP_RES_FOLDER_CLUSTER_TYPE
 } from '../shared/constants';
 import { Http, URLSearchParams } from '@angular/http';
 
@@ -414,6 +414,8 @@ export class CreateVchWizardService {
      */
     getDistributedPortGroups(dcObj: ComputeResource, resourceObj: ComputeResource): Observable<any> {
       const resourceObjIsCluster = resourceIsCluster(resourceObj.nodeTypeId);
+      console.log('getDistributedPortGroups dc:', dcObj);
+      console.log('getDistributedPortGroups resObj:', resourceObj);
       return this.getNetworkingTree(dcObj)
         .switchMap((networkingResources: ComputeResource[]) => {
           // gets the list of Dvs from the dc and or any existing network folder
@@ -454,6 +456,24 @@ export class CreateVchWizardService {
                   if (dvsHosts[index].some(host => host['value'] === getMorIdFromObjRef(resourceObj.objRef))) {
                     results = results.concat(dvs[index]);
                   }
+          /*
+          return Observable.combineLatest(allDvs, allDvsHosts).map(([dvs, dvsHosts]) => {
+            const selectedRCisCluster = resourceObj.nodeTypeId === DC_CLUSTER_TYPE || resourceObj.nodeTypeId === COMP_RES_FOLDER_CLUSTER_TYPE;
+            let results = [];
+            for (let index = 0; index < dvsHosts.length; index++) {
+              // If the selected resource object is a cluster we want to check if any child is connected to the vds, comparing objects ref,
+              // since only matching cluster name is not accurate because we can have more than one cluster with the same name.
+              if (selectedRCisCluster) {
+                resourceObj.childrens.forEach((child: ComputeResource) => {
+                  if (dvsHosts[index].some(computeResource => computeResource['hostRef']['value'] === getMorIdFromObjRef(child.objRef))) {
+                    results = results.concat(dvs[index]);
+                  }
+                })
+              // if the selected resource is a host we validates their ref values, not names, because names could be repeated
+              } else {
+                if (dvsHosts[index].some(computeResource => computeResource['hostRef']['value'] === getMorIdFromObjRef(resourceObj.objRef))) {
+                  results = results.concat(dvs[index]);
+              */
                 }
               }
               return flattenArray(results);
