@@ -37,7 +37,7 @@ export class NetworksComponent implements OnInit {
   public portgroupsLoading = true;
   public portgroups: any[] = [];
 
-  @Input() resourceObjName: any;
+  @Input() resourceObj: ComputeResource;
   @Input() datacenter: ComputeResource;
 
   constructor(
@@ -138,12 +138,12 @@ export class NetworksComponent implements OnInit {
     });
   }
 
-  loadPortgroups(computeResourceObjName: string) {
+  loadPortgroups(computeResourceObj: ComputeResource) {
     console.log('loadPortgroups dc:', this.datacenter);
-    console.log('loadPortgroups resObjName:', this.resourceObjName);
+    console.log('loadPortgroups resObjName:', this.resourceObj);
 
     this.portgroupsLoading = true;
-    this.createWzService.getDistributedPortGroups(this.datacenter, computeResourceObjName)
+    this.createWzService.getDistributedPortGroups(this.datacenter, computeResourceObj)
       .subscribe(v => {
         this.portgroups = v;
         this.form.get('bridgeNetwork').setValue('');
@@ -153,9 +153,10 @@ export class NetworksComponent implements OnInit {
         this.portgroupsLoading = false;
       }, err => console.error(err));
   }
+
   onPageLoad() {
     if (this.portgroups.length) {
-      this.loadPortgroups(this.resourceObjName);
+      this.loadPortgroups(this.resourceObj);
       return;
     }
 
@@ -281,7 +282,7 @@ export class NetworksComponent implements OnInit {
       });
 
       // load portgroups
-      this.loadPortgroups(this.resourceObjName);
+      this.loadPortgroups(this.resourceObj);
   }
 
   /**

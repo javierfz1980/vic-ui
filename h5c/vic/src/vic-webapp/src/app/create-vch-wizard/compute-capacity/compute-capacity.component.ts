@@ -59,7 +59,7 @@ export class ComputeCapacityComponent implements OnInit {
     cpu: { maxUsage: null, minUsage: null, unreservedForPool: null },
     memory: { maxUsage: null, minUsage: null, unreservedForPool: null }
   };
-  public selectedObjectName: string;
+  public selectedObject: ComputeResource;
   public selectedResourceObjRef: string;
   public serversInfo: ServerInfo[];
   public selectedResourceIsCluster = false;
@@ -156,7 +156,7 @@ export class ComputeCapacityComponent implements OnInit {
       this.form.controls['vmHostAffinity'].setValue(false);
     }
     this.selectedResourceObjRef = resourceObj;
-    this.selectedObjectName = obj.realName;
+    this.selectedObject = obj;// obj.realName;
     this._selectedComputeResource = computeResource;
 
     // set active class on the treenodecomponent whose datacenter object reference is

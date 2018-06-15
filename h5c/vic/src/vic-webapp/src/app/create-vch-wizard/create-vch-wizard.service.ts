@@ -25,7 +25,7 @@ import {
   GET_CLONE_TICKET_URL,
   MEMORY_MIN_LIMIT_MB,
   VIC_APPLIANCES_LOOKUP_URL,
-  VIC_APPLIANCE_PORT, DC_FOLDER_TYPE, COMP_RES_FOLDER_TYPE
+  VIC_APPLIANCE_PORT, DC_FOLDER_TYPE, COMP_RES_FOLDER_TYPE, DC_CLUSTER_TYPE, COMP_RES_FOLDER_CLUSTER_TYPE
 } from '../shared/constants';
 import { Http, URLSearchParams } from '@angular/http';
 
@@ -35,7 +35,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { byteToLegibleUnit } from '../shared/utils/filesize';
 import { flattenArray } from '../shared/utils/array-utils';
-import { getServerServiceGuidFromObj } from '../shared/utils/object-reference';
+import {getMorIdFromObjRef, getServerServiceGuidFromObj} from '../shared/utils/object-reference';
 
 @Injectable()
 export class CreateVchWizardService {
@@ -400,11 +400,11 @@ export class CreateVchWizardService {
     /**
      * Get all available portgroups for the selected compute resource
      * @param dcObj selected datacenter object
-     * @param resourceObjName name of the selected compute resource
+     * @param resourceObj the selected compute resource
      */
-    getDistributedPortGroups(dcObj: ComputeResource, resourceObjName?: string): Observable<any> {
+    getDistributedPortGroups(dcObj: ComputeResource, resourceObj?: ComputeResource): Observable<any> {
       console.log('getDistributedPortGroups dc:', dcObj);
-      console.log('getDistributedPortGroups resObjName:', resourceObjName);
+      console.log('getDistributedPortGroups resObj:', resourceObj);
 
       return this.getNetworkingTree(dcObj)
         .switchMap((networkingResources: ComputeResource[]) => {
@@ -432,14 +432,22 @@ export class CreateVchWizardService {
           // process the results from the zipped observables wherein only DV port group entries
           // whose parent distributed virtual switch can be accessed by the specified compute resource should be taken
           return Observable.combineLatest(allDvs, allDvsHosts).map(([dvs, dvsHosts]) => {
+            const selectedRCisCluster = resourceObj.nodeTypeId === DC_CLUSTER_TYPE || resourceObj.nodeTypeId === COMP_RES_FOLDER_CLUSTER_TYPE;
             let results = [];
             for (let index = 0; index < dvsHosts.length; index++) {
-              // if any of the array item's clusterName or hostName property matches resourceObjName,
-              // it means all portgroups under that switch can be accessed by this compute resource
-              if (dvsHosts[index].some(computeResource => {
-                return computeResource['clusterName'] === resourceObjName || computeResource['hostName'] === resourceObjName;
-              })) {
-                results = results.concat(dvs[index]);
+              // If the selected resource object is a cluster we want to check if any child is connected to the vds, comparing objects ref,
+              // since only matching cluster name is not accurate because we can have more than one cluster with the same name.
+              if (selectedRCisCluster) {
+                resourceObj.childrens.forEach((child: ComputeResource) => {
+                  if (dvsHosts[index].some(computeResource => computeResource['hostRef']['value'] === getMorIdFromObjRef(child.objRef))) {
+                    results = results.concat(dvs[index]);
+                  }
+                })
+              // if the selected resource is a host we validates their ref values, not names, because names could be repeated
+              } else {
+                if (dvsHosts[index].some(computeResource => computeResource['hostRef']['value'] === getMorIdFromObjRef(resourceObj.objRef))) {
+                  results = results.concat(dvs[index]);
+                }
               }
             }
             return flattenArray(results);
