@@ -25,7 +25,7 @@ import {
   GET_CLONE_TICKET_URL,
   MEMORY_MIN_LIMIT_MB,
   VIC_APPLIANCES_LOOKUP_URL,
-  VIC_APPLIANCE_PORT, DC_FOLDER_TYPE, COMP_RES_FOLDER_TYPE, DC_CLUSTER_TYPE, COMP_RES_FOLDER_CLUSTER_TYPE
+  VIC_APPLIANCE_PORT, COMPUTE_RESOURCE_NODE_TYPES,
 } from '../shared/constants';
 import { Http, URLSearchParams } from '@angular/http';
 
@@ -35,9 +35,11 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { byteToLegibleUnit } from '../shared/utils/filesize';
 import { flattenArray } from '../shared/utils/array-utils';
-import { getMorIdFromObjRef, getServerServiceGuidFromObj, resourceIsCluster } from '../shared/utils/object-reference';
+import { getMorIdFromObjRef, getServerServiceGuidFromObj, resourceIsCluster, isDesiredType } from '../shared/utils/object-reference';
 import { HostTypeInfo } from '../interfaces/api-responses';
 import { globalProperties } from '../../environments/global-properties';
+import { VicVmViewService } from '../services/vm-view.service';
+import { VirtualContainerHost } from '../vch-view/vch.model';
 
 @Injectable()
 export class CreateVchWizardService {
@@ -54,7 +56,8 @@ export class CreateVchWizardService {
 
     constructor(
         private http: Http,
-        private globalsService: GlobalsService
+        private globalsService: GlobalsService,
+        private vicVmViewService: VicVmViewService
     ) {
         this.getUserSession();
     }
@@ -185,7 +188,8 @@ export class CreateVchWizardService {
               return Observable.zip(
                   this.getResourcesTree(cr, cr.nodeTypeId),
                   this.getComputeResourceRealName(cr.objRef),
-                  this.getDatacenterForResource(cr.objRef)
+                  this.getDatacenterForResource(cr.objRef),
+                  this.getVchsInfo()
                 )
                 .map(data => {
                   // TODO: https://github.com/vmware/vic/pull/8048
@@ -196,17 +200,42 @@ export class CreateVchWizardService {
                   //
                   const childsData: ComputeResource[] = data[0];
                   const crRealName: string = data[1]['name'];
-                  const dcObjRef: string = data[2].id;
+                  const dcObjRef: string = data[2]['id'];
+                  const vchsRPNames: string[] = data[3]
+                    .filter(vch => this.isResourcePool(vch.parentType))
+                    .map(vch => vch.parentValue);
+                  // console.log('vchsData:', vchsData);
+                  console.log('data:', data);
                   cr.parentResource = obj;
                   cr.hasChildResources = childsData.length > 0 ? true : false;
-                  cr.childrens = childsData;
                   cr.realName = crRealName;
                   cr.datacenter = this._datacenter.filter(dc => dc['objRef'] === dcObjRef)[0];
+                  cr.childrens = childsData;
+                  cr.childrens.forEach(cr => {
+                    if (this.isResourcePool(cr.nodeTypeId) && vchsRPNames.indexOf(getMorIdFromObjRef(cr.objRef)) !== -1) {
+                      cr.nodeTypeId = COMPUTE_RESOURCE_NODE_TYPES.resource_pool.vic_vch_resource_pool;
+                    }
+                  });
                   return cr;
                 })
             })
         })
         .toArray();
+    }
+
+    getVchsInfo(): Observable<VirtualContainerHost[]> {
+      // since we are inside an ifram, we should fetch the vchs data to be used later...
+      this.vicVmViewService.getVchsData({});
+      return this.vicVmViewService.vchs$;
+    }
+
+    isResourcePool(type: string): boolean {
+      return isDesiredType(type, [
+        COMPUTE_RESOURCE_NODE_TYPES.resource_pool.resource_pool,
+        COMPUTE_RESOURCE_NODE_TYPES.resource_pool.host_resource_pool,
+        COMPUTE_RESOURCE_NODE_TYPES.resource_pool.cluster_resource_pool,
+        COMPUTE_RESOURCE_NODE_TYPES.resource_pool.resource_pool_resource_pool
+      ]);
     }
 
     /**
@@ -291,8 +320,8 @@ export class CreateVchWizardService {
                 .map(response => response.json())
                 .catch(e => Observable.throw(e))
                 .map(response => {
-                    const config = response['systemResources']['config'];
-                    return {
+                    const config = response['systemResources'] ? response['systemResources']['config'] : null;
+                    return !config ? null : {
                         cpu: {
                             maxUsage: config['cpuAllocation']['limit'],
                             minUsage: CPU_MIN_LIMIT_MHZ,
@@ -458,7 +487,8 @@ export class CreateVchWizardService {
                   }
           /*
           return Observable.combineLatest(allDvs, allDvsHosts).map(([dvs, dvsHosts]) => {
-            const selectedRCisCluster = resourceObj.nodeTypeId === DC_CLUSTER_TYPE || resourceObj.nodeTypeId === COMP_RES_FOLDER_CLUSTER_TYPE;
+            const selectedRCisCluster = resourceObj.nodeTypeId === COMPUTE_RESOURCE_NODE_TYPES.cluster.dc_cluster ||
+              resourceObj.nodeTypeId === COMPUTE_RESOURCE_NODE_TYPES.cluster.folder_cluster;
             let results = [];
             for (let index = 0; index < dvsHosts.length; index++) {
               // If the selected resource object is a cluster we want to check if any child is connected to the vds, comparing objects ref,

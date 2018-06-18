@@ -24,19 +24,14 @@ import {
   ElementRef,
   Renderer
 } from '@angular/core';
-import {
-  DC_CLUSTER_TYPE,
-  STANDALONE_HOST_RES_POOL_TYPE,
-  DC_STANDALONE_HOST_TYPE,
-  COMP_RES_FOLDER_CLUSTER_TYPE
-} from '../../shared/constants';
 
 import { CreateVchWizardService } from '../create-vch-wizard.service';
 import { Observable } from 'rxjs/Observable';
 import { GlobalsService } from '../../shared';
 import { ComputeResource } from '../../interfaces/compute.resource';
 import { ServerInfo } from '../../shared/vSphereClientSdkTypes';
-import {getMorIdFromObjRef} from '../../shared/utils/object-reference';
+import { COMPUTE_RESOURCE_NODE_TYPES } from '../../shared/constants';
+import {isDesiredType} from '../../shared/utils/object-reference';
 
 /**
  * Component that renders a tree view of the inventory items on the selected Datacenter
@@ -49,6 +44,9 @@ import {getMorIdFromObjRef} from '../../shared/utils/object-reference';
   templateUrl: './compute-resource-treenode.template.html'
 })
 export class ComputeResourceTreenodeComponent implements OnInit {
+
+  public readonly CR_TYPES = COMPUTE_RESOURCE_NODE_TYPES;
+
   public loading = true;
   public selectedResourceObj: ComputeResource;
   public tree: {childrens: ComputeResource[]};
@@ -94,10 +92,7 @@ export class ComputeResourceTreenodeComponent implements OnInit {
     // we also should allow type 'StandaloneHostResPool' when the API to fetch the list of  VCH's  Pool Resources is ready.
     // By now we are filtering Pool Resources.
     //
-    if (obj.nodeTypeId === DC_CLUSTER_TYPE ||
-        obj.nodeTypeId === DC_STANDALONE_HOST_TYPE ||
-        obj.nodeTypeId === COMP_RES_FOLDER_CLUSTER_TYPE) {
-
+    if (this.isAllowedType(obj)) {
       this.currentPath = [];
       this.buildPathForResource(obj.objRef, this.tree.childrens);
       obj.resourcePath = this.currentPath.reverse().join('/');
@@ -114,6 +109,19 @@ export class ComputeResourceTreenodeComponent implements OnInit {
     this.computeResourceBtns.forEach((elRef: ElementRef) => {
       this.renderer.setElementClass(elRef.nativeElement, 'active', false);
     })
+  }
+
+  private isAllowedType(obj: ComputeResource): boolean {
+    // is Cluster or standalone Host or non vic Resource Pool
+    return isDesiredType(obj.nodeTypeId, [
+      this.CR_TYPES.cluster.dc_cluster,
+      this.CR_TYPES.cluster.folder_cluster,
+      this.CR_TYPES.host.dc_stand_alone,
+      this.CR_TYPES.resource_pool.host_resource_pool,
+      this.CR_TYPES.resource_pool.resource_pool,
+      this.CR_TYPES.resource_pool.cluster_resource_pool,
+      this.CR_TYPES.resource_pool.resource_pool_resource_pool
+    ]);
   }
 
   private buildPathForResource(ref: string, tree: ComputeResource[]) {

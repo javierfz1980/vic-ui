@@ -65,6 +65,10 @@ export class VirtualContainerHost implements VirtualMachine {
     return this._parentObj.type;
   }
 
+  get parentValue(): string {
+    return this._parentObj.value;
+  }
+
   get id(): string {
     return this._vchVmId;
   }
