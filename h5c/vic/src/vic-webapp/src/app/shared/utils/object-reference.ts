@@ -55,3 +55,7 @@ export function getServerInfoByVchObjRef (serversInfo: ServerInfo[], vch: Virtua
   });
   return filtered[0] || null;
 }
+
+export function isDesiredType(type: string, types: string[]): boolean {
+  return types.indexOf(type) !== -1;
+}

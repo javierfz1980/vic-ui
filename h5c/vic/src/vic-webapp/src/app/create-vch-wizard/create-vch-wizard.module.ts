@@ -30,6 +30,7 @@ import { StorageCapacityComponent } from './storage-capacity/storage-capacity.co
 import { SummaryComponent } from './summary/summary.component';
 import { VchCreationWizardGeneralComponent } from './general/general.component';
 import { RegistryAccessComponent } from './registry-access/registry-access.component';
+import {VicVmViewService} from '../services/vm-view.service';
 
 const routes: Routes = [
   { path: '', component: CreateVchWizardComponent },
@@ -57,6 +58,7 @@ const routes: Routes = [
     SummaryComponent
   ],
   providers: [
+    VicVmViewService,
     CreateVchWizardService
   ],
   exports: [

@@ -14,11 +14,27 @@
  limitations under the License.
 */
 
-export const DC_TYPE = 'Datacenter';
-export const DC_FOLDER_TYPE = 'DcCompResFolder';
-export const DC_CLUSTER_TYPE = 'DcCluster';
-export const DC_STANDALONE_HOST_TYPE = 'DcStandaloneHost';
-export const COMP_RES_FOLDER_TYPE = 'CompResFolderCompResFolder';
-export const STANDALONE_HOST_RES_POOL_TYPE = 'StandaloneHostResPool';
-export const CLUSTER_HOST_SYSTEM_TYPE = 'ClusterHostSystem';
-export const COMP_RES_FOLDER_CLUSTER_TYPE = 'CompResFolderCluster';
+export const COMPUTE_RESOURCE_NODE_TYPES = {
+  dc: {
+    dc: 'Datacenter'
+  },
+  folder: {
+    dc_folder: 'DcCompResFolder',
+    comp_res_folder: 'CompResFolderCompResFolder'
+  },
+  host: {
+    dc_stand_alone: 'DcStandaloneHost',
+    cluster_host: 'ClusterHostSystem'
+  },
+  cluster: {
+    dc_cluster: 'DcCluster',
+    folder_cluster: 'CompResFolderCluster'
+  },
+  resource_pool: {
+    resource_pool: 'ResourcePool',
+    host_resource_pool: 'StandaloneHostResPool',
+    cluster_resource_pool: 'ClusterResPool',
+    resource_pool_resource_pool: 'ResPoolResPool',
+    vic_vch_resource_pool: 'VicVchResourcePool'
+  }
+};

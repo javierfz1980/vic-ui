@@ -22,15 +22,15 @@ import {
 
 import { ComputeResourceTreenodeComponent } from './compute-resource-treenode.component';
 import { CreateVchWizardService } from '../create-vch-wizard.service';
-import {COMP_RES_FOLDER_CLUSTER_TYPE, DC_CLUSTER_TYPE, STANDALONE_HOST_RES_POOL_TYPE} from '../../shared/constants';
 import { Observable } from 'rxjs/Observable';
 import { GlobalsService } from './../../shared/globals.service';
 import { ComputeResource } from '../../interfaces/compute.resource';
-import { getMorIdFromObjRef } from '../../shared/utils/object-reference';
+import {getMorIdFromObjRef, isDesiredType} from '../../shared/utils/object-reference';
 import 'rxjs/add/observable/timer';
 import { ServerInfo } from '../../shared/vSphereClientSdkTypes';
 import { flattenArray } from '../../shared/utils/array-utils';
 import { I18nService } from '../../shared';
+import {COMPUTE_RESOURCE_NODE_TYPES} from '../../shared/constants';
 
 const endpointMemoryDefaultValue = 2048;
 
@@ -181,73 +181,72 @@ export class ComputeCapacityComponent implements OnInit {
 
     Observable.zip(allocationsObs, vmGroupsObs, isDrsEnabled)
       .subscribe(([allocationsInfo, groups, drsStatus]) => {
-        const cpu = allocationsInfo['cpu'];
-        const memory = allocationsInfo['memory'];
-        this.resourceLimits = allocationsInfo;
-        this.vmsGroups = groups;
+        if (allocationsInfo) {
+          const cpu = allocationsInfo['cpu'];
+          const memory = allocationsInfo['memory'];
+          this.resourceLimits = allocationsInfo;
+          this.vmsGroups = groups;
 
-        // set max limit validator for cpu maxUsage
-        this.form.get('cpuLimit').setValidators([
-          ...getNumericValidatorsArray(true),
-          Validators.max(cpu['maxUsage'])
-        ]);
+          // set max limit validator for cpu maxUsage
+          this.form.get('cpuLimit').setValidators([
+            ...getNumericValidatorsArray(true),
+            Validators.max(cpu['maxUsage'])
+          ]);
 
-        // set max limit validator for memory maxUsage
-        this.form.get('memoryLimit').setValidators([
-          ...getNumericValidatorsArray(true),
-          Validators.max(memory['maxUsage'])
-        ]);
-
-        // validates the name of the group and drsStatus
-        this.validateVMGroupsNameAndDrs(this.vmsGroups, drsStatus);
-
-        if (this.inAdvancedMode) {
-          // set max limit validator for endpointMemory
-          this.form.get('endpointMemory').setValidators([
-            ...getNumericValidatorsArray(false),
+          // set max limit validator for memory maxUsage
+          this.form.get('memoryLimit').setValidators([
+            ...getNumericValidatorsArray(true),
             Validators.max(memory['maxUsage'])
           ]);
 
-          // set max limit validator for cpu unreservedForPool
-          this.form.get('cpuReservation').setValidators([
-            ...getNumericValidatorsArray(false),
-            Validators.max(cpu['unreservedForPool'])
-          ]);
+          // validates the name of the group and drsStatus
+          this.validateVMGroupsNameAndDrs(this.vmsGroups, drsStatus);
 
-          // set max limit validator for memory unreservedForPool
-          this.form.get('memoryReservation').setValidators([
-            ...getNumericValidatorsArray(false),
-            Validators.max(memory['unreservedForPool'])
-          ]);
+          if (this.inAdvancedMode) {
+            // set max limit validator for endpointMemory
+            this.form.get('endpointMemory').setValidators([
+              ...getNumericValidatorsArray(false),
+              Validators.max(memory['maxUsage'])
+            ]);
 
-          // This prevents the next button from getting disabled when the user selects a host or cluster that has less RAM
-          // available for VM endpoint than the default value. As a solution, we set the smaller value between the default
-          // value and memory['maxUsage']
-          this.form.get('endpointMemory').setValue(Math.min(memory['maxUsage'], endpointMemoryDefaultValue) + '', { emitEvent: false });
-        } else {
-          this.form.get('endpointMemory').setValidators([]);
-          this.form.get('cpuReservation').setValidators([]);
-          this.form.get('memoryReservation').setValidators([]);
+            // set max limit validator for cpu unreservedForPool
+            this.form.get('cpuReservation').setValidators([
+              ...getNumericValidatorsArray(false),
+              Validators.max(cpu['unreservedForPool'])
+            ]);
+
+            // set max limit validator for memory unreservedForPool
+            this.form.get('memoryReservation').setValidators([
+              ...getNumericValidatorsArray(false),
+              Validators.max(memory['unreservedForPool'])
+            ]);
+
+            // This prevents the next button from getting disabled when the user selects a host or cluster that has less RAM
+            // available for VM endpoint than the default value. As a solution, we set the smaller value between the default
+            // value and memory['maxUsage']
+            this.form.get('endpointMemory').setValue(Math.min(memory['maxUsage'], endpointMemoryDefaultValue) + '', {emitEvent: false});
+          } else {
+            this.form.get('endpointMemory').setValidators([]);
+            this.form.get('cpuReservation').setValidators([]);
+            this.form.get('memoryReservation').setValidators([]);
+          }
+
+          this.form.get('cpuLimit').updateValueAndValidity();
+          this.form.get('memoryLimit').updateValueAndValidity();
+          this.form.get('endpointMemory').updateValueAndValidity();
+          this.form.get('cpuReservation').updateValueAndValidity();
+          this.form.get('memoryReservation').updateValueAndValidity();
         }
-
-        this.form.get('cpuLimit').updateValueAndValidity();
-        this.form.get('memoryLimit').updateValueAndValidity();
-        this.form.get('endpointMemory').updateValueAndValidity();
-        this.form.get('cpuReservation').updateValueAndValidity();
-        this.form.get('memoryReservation').updateValueAndValidity();
       });
   }
 
   private isCluster(obj: ComputeResource): boolean {
-    return this.isDesiredType(obj, [DC_CLUSTER_TYPE, COMP_RES_FOLDER_CLUSTER_TYPE]);
+    return isDesiredType(obj.nodeTypeId,
+      [COMPUTE_RESOURCE_NODE_TYPES.cluster.dc_cluster, COMPUTE_RESOURCE_NODE_TYPES.cluster.folder_cluster]);
   }
 
   private isResourcePool(obj: ComputeResource): boolean {
-    return this.isDesiredType(obj, [STANDALONE_HOST_RES_POOL_TYPE]);
-  }
-
-  private isDesiredType(obj: ComputeResource, types: string[]): boolean {
-    return types.indexOf(obj.nodeTypeId) !== -1;
+    return isDesiredType(obj.nodeTypeId, [COMPUTE_RESOURCE_NODE_TYPES.resource_pool.host_resource_pool]);
   }
 
   /**
