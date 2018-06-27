@@ -14,11 +14,23 @@
  limitations under the License.
 */
 
-export interface ComputeResource {
-  text: string;
-  nodeTypeId: string;
-  objRef: string;
-  aliases: string[];
-  isEmpty: boolean;
-  realName?: string;
+export interface ResourceBasicInfo {
+  serverGuid: string;
+  type: string;
+  value: string;
+}
+
+export interface ComputeResource extends ResourceBasicInfo {
+  name: string;
+  parent: ComputeResource,
+  resourcePool: ResourceBasicInfo,
+  id?: string;
+  objRef?: string;
+  text?: string;
+  datacenterObjRef?: string;
+  isEmpty?: boolean;
+  childs?: ResourceBasicInfo[];
+  aliases?: string[];
+  nodeTypeId?: string;
+  rootParentComputeResource: ComputeResource;
 }

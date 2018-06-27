@@ -145,7 +145,7 @@ describe('ComputeResourceTreenodeComponent', () => {
   it('should retrieve hosts and clusters filtered by datacenter1', () => {
     component.datacenter = datacenter1;
     spyOn(service, 'getClustersList').and.returnValue(Observable.of(mockedClustersList));
-    spyOn(service, 'getAllClusterHostSystems').and.returnValue(Observable.of(cluster2HostSystems));
+    spyOn(service, 'getHostsAndResourcePoolsFromClusters').and.returnValue(Observable.of(cluster2HostSystems));
     component.loadClusters(<ServerInfo>{serviceGuid: serverInfoServiceGui});
 
     expect(component.clusters.length).toBe(1);
@@ -157,7 +157,7 @@ describe('ComputeResourceTreenodeComponent', () => {
   it('should retrieve hosts and clusters filtered by datacenter2', () => {
     component.datacenter = datacenter;
     spyOn(service, 'getClustersList').and.returnValue(Observable.of(mockedClustersList));
-    spyOn(service, 'getAllClusterHostSystems').and.returnValue(Observable.of(cluster1HostSystems));
+    spyOn(service, 'getHostsAndResourcePoolsFromClusters').and.returnValue(Observable.of(cluster1HostSystems));
     component.loadClusters(<ServerInfo>{serviceGuid: serverInfoServiceGui});
 
     expect(component.clusters.length).toBe(1);

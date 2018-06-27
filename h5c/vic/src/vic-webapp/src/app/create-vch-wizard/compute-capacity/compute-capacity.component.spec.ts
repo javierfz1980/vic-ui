@@ -132,7 +132,7 @@ describe('ComputeCapacityComponent', () => {
     spyOn(service, 'getDatacenter').and.callThrough();
     spyOn(service, 'getClustersList').and.callThrough();
     spyOn(service, 'getResourceAllocationsInfo').and.callThrough();
-    spyOn(service, 'getHostsAndResourcePools').and.callThrough();
+    spyOn(service, 'getHostsAndResourcePoolsFromCluster').and.callThrough();
   });
 
   it('should be created', () => {

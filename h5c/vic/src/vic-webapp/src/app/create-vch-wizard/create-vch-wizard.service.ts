@@ -20,7 +20,7 @@ import 'rxjs/add/operator/mergeAll';
 import 'rxjs/add/operator/mergeMap';
 
 import {
-  CHECK_RP_UNIQUENESS_URL,
+  CHECK_RP_UNIQUENESS_URL, COMPUTE_RESOURCE_NODE_TYPES,
   CPU_MIN_LIMIT_MHZ,
   GET_CLONE_TICKET_URL,
   MEMORY_MIN_LIMIT_MB,
@@ -28,15 +28,23 @@ import {
 } from '../shared/constants';
 import { Http, URLSearchParams } from '@angular/http';
 
-import { ComputeResource } from '../interfaces/compute.resource';
 import { GlobalsService } from '../shared';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { byteToLegibleUnit } from '../shared/utils/filesize';
 import { flattenArray } from '../shared/utils/array-utils';
-import { getMorIdFromObjRef, getServerServiceGuidFromObj, resourceIsCluster } from '../shared/utils/object-reference';
-import { HostTypeInfo } from '../interfaces/api-responses';
+import {
+  getMorIdFromObjRef,
+  getServerServiceGuidFromObj,
+  resourceIsCluster,
+  resourceIsHost,
+  resourceIsResourcePool
+} from '../shared/utils/object-reference';
+import {ResourceBasicInfo, ComputeResource} from '../interfaces/compute.resource';
 import { globalProperties } from '../../environments/global-properties';
+import {HttpClient} from '@angular/common/http';
+import {VirtualContainerHost} from '../vch-view/vch.model';
+import {VicVmViewService} from '../services/vm-view.service';
 
 @Injectable()
 export class CreateVchWizardService {
@@ -53,7 +61,9 @@ export class CreateVchWizardService {
 
     constructor(
         private http: Http,
-        private globalsService: GlobalsService
+        private httpClient: HttpClient,
+        private globalsService: GlobalsService,
+        private vicVmViewService: VicVmViewService
     ) {
         this.getUserSession();
     }
@@ -134,100 +144,200 @@ export class CreateVchWizardService {
         return this._serverGuid;
     }
 
-    /**
-     * Get datacenter for the current VC
-     * TODO: unit test
-     */
-    getDatacenter(serverGuid: string): Observable<any[]> {
-      return this.http.get('/ui/tree/children?nodeTypeId=VcRoot' +
-        `&objRef=urn:vmomi:Folder:group-d1:${serverGuid}&treeId=vsphere.core.physicalInventorySpec`)
-        .catch(e => Observable.throw(e))
-        .map(response => response.json())
-        .catch(e => Observable.throw(e))
-        .map(response => {
-            this._datacenter = response;
-            return this._datacenter;
-        });
-    }
+  getResourceCompleteInfo(resourceBasicInfo: ResourceBasicInfo): Observable<ComputeResource> {
+    const objRef: string = `urn:vmomi:${resourceBasicInfo.type}:${resourceBasicInfo.value}:${resourceBasicInfo.serverGuid}`;
+    const props: string = 'name,parent,resourcePool';
+    const url: string = `${globalProperties.vicService.paths.properties}${objRef}?properties=${props}`;
+    return this.httpClient.get<ComputeResource>(url)
+  }
+
+  getResourcesCompleteInfo(basicInfoList: ResourceBasicInfo[]): Observable<ComputeResource[]> {
+    const infoListObs: Observable<ComputeResource>[] = basicInfoList
+      .map(resourceBasicInfo => {
+        const objRef: string = `urn:vmomi:${resourceBasicInfo.type}:${resourceBasicInfo.value}:${resourceBasicInfo.serverGuid}`;
+        return this.getResourceCompleteInfo(resourceBasicInfo)
+          .map(resourceCompleteInfo => {
+            // element could have a single resourcePool or an Array of resourcePools
+            const resPoolInfo: ResourceBasicInfo = resourceCompleteInfo.resourcePool;
+            const resPoolObjRef: string[] = [];
+            if (resPoolInfo) {
+              if (!Array.isArray(resPoolInfo)) {
+                // if element's resourcePool return is not an Array, we need to insert the single element into the array
+                resPoolObjRef.push(`urn:vmomi:${resPoolInfo.type}:${resPoolInfo.value}:${resPoolInfo.serverGuid}`);
+              } else {
+                // if element's resourcePool return is an Array, we need to insert each element...
+                resPoolInfo.forEach(resPoolElement => {
+                  const ref: string = `urn:vmomi:${resPoolElement.type}:${resPoolElement.value}:${resPoolElement.serverGuid}`;
+                  resPoolObjRef.push(ref);
+                })
+              }
+            }
+
+            return ({
+              ...resourceBasicInfo,
+              ...resourceCompleteInfo,
+              text: resourceCompleteInfo.name,
+              nodeTypeId: resourceBasicInfo.type,
+              objRef: objRef,
+              aliases: resPoolObjRef
+            })
+          })
+    });
+    return infoListObs.length > 0 ? Observable.zip(...infoListObs) : Observable.of([]);
+  }
+
+  getResourceProperties<ResponseType>(objRef: string, properties: string): Observable<ResponseType[]> {
+    const url: string = `${globalProperties.vicService.paths.properties}${objRef}?properties=${properties}`;
+    return this.httpClient.get<ResponseType[]>(url);
+  }
 
   /**
-   * Queries the H5 Client to obtain the name of a Compute Resource
+   * Get datacenter for the current VC
+   * TODO: unit test
    */
-  private getComputeResourceRealName(crObjectRef: string): Observable<ComputeResource> {
-    return this.http.get(`/ui/data/properties/${crObjectRef}?properties=name`)
-      .catch(e => Observable.throw(e))
-      .map(response => response.json());
+  getDatacenter(serverGuid: string): Observable<ComputeResource[]> {
+    const objRef: string = `urn:vmomi:Folder:group-d1:${serverGuid}`;
+    const props: string = 'childEntity';
+    return this.getResourceProperties<ResourceBasicInfo>(objRef, props)
+      .map(data => data['childEntity'])
+      .switchMap(data => this.getResourcesCompleteInfo(data))
   }
 
   /**
    * Queries the H5 Client for Clusters and stand alone Hosts from the desired DC
    */
-  private getDcClustersAndStandAloneHosts(dcObjRef: string): Observable<ComputeResource[]> {
-    return this.http.get('/ui/tree/children?nodeTypeId=RefAsRoot' +
-      `&objRef=${dcObjRef}` +
-      '&treeId=DcHostsAndClustersTree')
-      .catch(e => Observable.throw(e))
-      .map(response => response.json());
+  getDcClustersAndStandAloneHosts(dcObj: ComputeResource): Observable<ComputeResource[]> {
+    const props: string = 'host,cluster';
+    return this.getResourceProperties<any>(dcObj.objRef, props)
+      .map(data => ({childResources: data['cluster'].concat(data['host'])}))
+      .switchMap(data => {
+        return this.getResourcesCompleteInfo(data.childResources)
+          .switchMap((data: ComputeResource[]) => {
+
+            const clusters: ComputeResource[] = data
+              .filter((rci: ComputeResource) => resourceIsCluster(rci.type));
+
+            const standAloneHosts: ComputeResource[] = data
+              .filter((rci: ComputeResource) => resourceIsHost(rci.type) && !resourceIsCluster(rci.parent.type));
+
+            if (standAloneHosts.length > 0) {
+              // if we have stand alone Hosts, we want to fetch also its childs (resource pool tree)
+              const standAloneHostsWithChilds: Observable<ComputeResource>[] = standAloneHosts.map(host => {
+                return this.getResourcePoolsTree(host.aliases[0], host)
+                  .map(resourcePoolTreeList => {
+                    host.childs = resourcePoolTreeList;
+                    return host;
+                  })
+              });
+              return Observable.zip(...standAloneHostsWithChilds)
+                .map(hostsWithChilds => {
+                  return clusters.concat(hostsWithChilds)
+                });
+
+            } else {
+              // if we don't have stand alone Host, we only return Cluster list
+              return Observable.of(clusters);
+            }
+          })
+      })
+      .map((list: ComputeResource[]) => {
+        // sets the reference to the DC object for each Cluster and stand alone Host
+        list.forEach((obj: ComputeResource) => obj.rootParentComputeResource = dcObj);
+        return list;
+      })
   }
 
-    /**
-     * Queries the H5 Client for clusters
-     */
-    getClustersList(serverGuid: string): Observable<any> {
-      return this.getDatacenter(serverGuid)
-        .switchMap(dc => {
-          const obsArr = dc.map(v => {
-            return this.getDcClustersAndStandAloneHosts(v.objRef)
-              .switchMap((computeResources: ComputeResource[]) => {
-                return Observable.from(computeResources)
-                  .mergeMap((cr: ComputeResource) => {
-                    cr['datacenterObjRef'] = v.objRef;
-                    return this.getComputeResourceRealName(cr.objRef)
-                      .map(resourceName => {
-                        cr['realName'] = resourceName['name'];
-                        return cr;
-                      });
-                  })
-                  .toArray();
+  getResourcePoolsTree(parentResourcePoolRef: string, rootParentComputeResource: ComputeResource = null): Observable<ComputeResource[]> {
+    console.log('rootParentComputeResource:', rootParentComputeResource.type);
+    return this.getResourceProperties<any>(parentResourcePoolRef, 'resourcePool')
+      .map(data => data['resourcePool'] ? data['resourcePool'] : [])
+      .switchMap(data => data.length > 0 ? this.getResourcesCompleteInfo(data) : Observable.of([]))
+      .map((list: ComputeResource[]) => {
+        // sets the reference to the Cluster object for each Host and ResourcePool
+        list.forEach((obj: ComputeResource) => obj.rootParentComputeResource = rootParentComputeResource);
+        return list;
+      })
+      .switchMap((resourcePoolList: ComputeResource[]) => {
+        const resourcePoolListObs = resourcePoolList.map((resPool: ComputeResource) => {
+            return this.getResourcePoolsTree(resPool.objRef, rootParentComputeResource)
+              .map((childResPool: ComputeResource[]) => {
+                resPool.childs = childResPool.length > 0 ? childResPool : [];
+                return resPool;
               })
           });
-          return Observable.zip.apply(null, obsArr);
-        })
-        .map((clustersArr: any[]) => {
-          let flattened = [];
-          clustersArr.forEach(arr => flattened = flattened.concat(arr));
-          return flattened;
-        });
-    }
 
-    /**
-     * Queries the H5 Client for hosts, vapps and resourcepools
-     * for the given cluster object id
-     */
-    getHostsAndResourcePools(clusterObjId: string): Observable<any[]> {
-        return this.http.get('/ui/tree/children?nodeTypeId=DcCluster' +
-                   `&objRef=${clusterObjId}` +
-                   '&treeId=DcHostsAndClustersTree')
-                   .catch(e => Observable.throw(e))
-                   .map(response => response.json())
-                   .catch(e => Observable.throw(e))
-                   .map(response => response.filter(
-                       item => item['nodeTypeId'] !== 'ClusterResPool'));
-    }
+        return resourcePoolListObs.length > 0 ? Observable.zip(...resourcePoolListObs) : Observable.of([]);
+      })
+  }
 
-    /**
+  /**
+   * Queries the H5 Client for hosts, and resourcepools
+   * for the given cluster object id
+   */
+  getHostsAndResourcePoolsFromCluster(cluster: ComputeResource): Observable<any[]> {
+    const props: string = 'host';
+    return this.getResourceProperties<any>(cluster.objRef, props)
+      .switchMap(hostAndRootResPool => {
+        const hosts: ResourceBasicInfo[] = hostAndRootResPool['host'] ? hostAndRootResPool['host'] : [];
+        // const rootResPool: ResourceBasicInfo = hostAndRootResPool['resourcePool'];
+        // const rootResPoolRef: string = `urn:vmomi:ResourcePool:${rootResPool.value}:${rootResPool.serverGuid}`;
+        return this.getResourcePoolsTree(cluster.aliases[0], cluster)
+          .map(resPoolList => {
+            return {childResources: hosts.concat(resPoolList)};
+          })
+      })
+      .switchMap(data => this.getResourcesCompleteInfo(data.childResources))
+      .map((list: ComputeResource[]) => {
+        // sets the reference to the Cluster object for each Host and ResourcePool
+        list.forEach((obj: ComputeResource) => obj.rootParentComputeResource = cluster);
+        return list;
+      })
+  }
+  /*getHostsAndResourcePoolsFromCluster(clusterObjId: string): Observable<any[]> {
+    const props: string = 'host,resourcePool';
+    return this.getResourceProperties<any>(clusterObjId, props)
+      .switchMap(hostAndRootResPool => {
+        const hosts: ResourceBasicInfo[] = hostAndRootResPool['host'] ? hostAndRootResPool['host'] : [];
+        const rootResPool: ResourceBasicInfo = hostAndRootResPool['resourcePool'];
+        const rootResPoolRef: string = `urn:vmomi:ResourcePool:${rootResPool.value}:${rootResPool.serverGuid}`;
+        return this.getResourcePoolsTree(rootResPoolRef)
+          .map(resPoolList => {
+            return {childResources: hosts.concat(resPoolList)};
+          })
+      })
+      .switchMap(data => this.getResourceCompleteInfo(data.childResources))
+  }*/
+
+  getVicVchsInfo(): Observable<VirtualContainerHost[]> {
+    // since we are inside an iframe, we should fetch the vchs data to be used later...
+    this.vicVmViewService.getVchsData({});
+    return this.vicVmViewService.vchs$;
+  }
+
+  getVicResourcePoolList(): Observable<string[]> {
+    return this.getVicVchsInfo()
+      .map(vchsInfo => {
+        const vchsRPNames: string[] = vchsInfo
+          .filter(vch => resourceIsResourcePool(vch.parentType))
+          .map(vch => vch.parentValue);
+        return vchsRPNames;
+      })
+  }
+
+
+  /**
      * Queries the H5 Client for ClusterHostSystems for all DcClusters
      * @param clusters
      */
-    getAllClusterHostSystems(clusters: ComputeResource[]): Observable<any[]> {
+    getHostsAndResourcePoolsFromClusters(clusters: ComputeResource[]): Observable<ComputeResource[]> {
       return Observable.from(clusters)
         .concatMap((cluster: ComputeResource) => {
-          return this.getHostsAndResourcePools(cluster.objRef);
+          return this.getHostsAndResourcePoolsFromCluster(cluster);
         });
     }
 
-    getResourceAllocationsInfo(resourceObjId: string, isCluster: boolean): Observable<any> {
-        if (isCluster) {
+    getResourceAllocationsInfo(resourceObjId: string, isHost: boolean): Observable<any> {
+        if (!isHost) {
             return this.http.get(`/ui/data/${resourceObjId}` +
                 '?model=com.vmware.vsphere.client.clusterui.model.ResourcePoolConfigData')
                 .catch(e => Observable.throw(e))
@@ -353,18 +463,18 @@ export class CreateVchWizardService {
     /**
      * Creates an array of observables for DVS host entries
      * @param {ComputeResource[]} dvsList
-     * @returns {Observable<HostTypeInfo>[]}
+     * @returns {Observable<ResourceBasicInfo>[]}
      */
-    private getDvsHostsEntries(dvsList: ComputeResource[]): Observable<HostTypeInfo[]>[] {
+    private getDvsHostsEntries(dvsList: ComputeResource[]): Observable<ResourceBasicInfo[]>[] {
       return dvsList.map(dv => this.getHostsFromComputeResource(dv));
     }
 
     /**
      * Returns all the host contained in a ComputeResource Object (eg: Cluster)
      * @param {ComputeResource} obj
-     * @returns {Observable<HostTypeInfo[]>}
+     * @returns {Observable<ResourceBasicInfo[]>}
      */
-    getHostsFromComputeResource(obj: ComputeResource): Observable<HostTypeInfo[]> {
+    getHostsFromComputeResource(obj: ComputeResource): Observable<ResourceBasicInfo[]> {
       return this.http.get(`${globalProperties.vicService.paths.properties}${obj.objRef}?properties=host`)
         .map(response => response.json())
         .map(data => data['host'] ? data['host'] : []);
@@ -376,7 +486,7 @@ export class CreateVchWizardService {
      * @param resourceObj the selected compute resource
      */
     getDistributedPortGroups(dcObj: ComputeResource, resourceObj: ComputeResource): Observable<any> {
-      const resourceObjIsCluster = resourceIsCluster(resourceObj.nodeTypeId);
+      const resourceObjIsCluster = resourceIsCluster(resourceObj.type);
       return this.getNetworkingTree(dcObj)
         .switchMap((networkingResources: ComputeResource[]) => {
           // gets the list of Dvs from the dc and or any existing network folder
@@ -390,7 +500,7 @@ export class CreateVchWizardService {
           const dvsObs: Observable<ComputeResource>[] = this.getDvsPortGroups(dvsList);
 
           // create an array of observables for DVS host entries
-          const dvsHostsObs: Observable<HostTypeInfo[]>[] = this.getDvsHostsEntries(dvsList);
+          const dvsHostsObs: Observable<ResourceBasicInfo[]>[] = this.getDvsHostsEntries(dvsList);
 
           // zip all observables
           const allDvs = Observable.zip.apply(null, dvsObs);
