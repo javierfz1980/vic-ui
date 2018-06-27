@@ -168,16 +168,16 @@ export class ComputeCapacityComponent implements OnInit {
     const resourceObj = payload.obj.objRef;
     const dcObj = payload.datacenterObj.objRef;
 
-    let computeResource = `/${payload.datacenterObj.text}/host`;
+    // let computeResource = `/${payload.datacenterObj.text}/host`;
     let resourceObjForResourceAllocations = resourceObj;
 
     if (isCluster || isResourcePool) {
-      computeResource = `${computeResource}/${payload.obj.name}`;
+      // computeResource = `${computeResource}/${payload.obj.name}`;
       resourceObjForResourceAllocations = payload.obj.aliases[0] ? payload.obj.aliases[0] : payload.obj.objRef;
     } else {
-      computeResource = payload.parentClusterObj ?
+      /* computeResource = payload.parentClusterObj ?
         `${computeResource}/${payload.parentClusterObj.text}/${payload.obj.name}` :
-        `${computeResource}/${payload.obj.name}`;
+        `${computeResource}/${payload.obj.name}`; */
     }
 
     if (!isCluster) {
@@ -187,7 +187,7 @@ export class ComputeCapacityComponent implements OnInit {
     this.dcObj = payload.datacenterObj;
     this.selectedObject = payload.obj;
     this.selectedResourceIsCluster = isCluster;
-    this._selectedComputeResource = computeResource;
+    this._selectedComputeResource = payload.obj.value;
 
     // set active class on the treenodecomponent whose datacenter object reference is
     // the same as datacenterObj.objRef
